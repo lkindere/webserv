@@ -6,7 +6,7 @@
 #    By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/07/17 15:05:47 by lkindere          #+#    #+#              #
-#    Updated: 2022/07/17 15:13:07 by lkindere         ###   ########.fr        #
+#    Updated: 2022/07/17 16:12:20 by lkindere         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,10 +21,10 @@ C_SRCS :=	Socket.cpp		\
 
 all: client server
 
-server: $(S_SRCS)
+server: $(S_SRCS) Socket.hpp
 	c++ $(S_SRCS) -o $(SERVER)
 
-client: $(C_SRCS)
+client: $(C_SRCS) Socket.hpp
 	c++ $(C_SRCS) -o $(CLIENT)
 
 clean:

@@ -6,7 +6,7 @@
 /*   By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/17 01:46:49 by lkindere          #+#    #+#             */
-/*   Updated: 2022/07/17 15:02:20 by lkindere         ###   ########.fr       */
+/*   Updated: 2022/07/17 15:14:57 by lkindere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ void Socket::socket_connect(){
 		throw(std::runtime_error("Failed to connect"));
 }
 
-//Sends data to socket
+//Sends data to socket returns bytes sent
 size_t Socket::socket_send(const void *buf, size_t len, int flags){
 	size_t ret = send(fd, buf, len, flags);
 	if (ret < 0)
