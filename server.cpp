@@ -6,7 +6,7 @@
 /*   By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/17 02:17:55 by lkindere          #+#    #+#             */
-/*   Updated: 2022/07/17 16:11:56 by lkindere         ###   ########.fr       */
+/*   Updated: 2022/09/23 17:11:58 by lkindere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <string>
 
 #include "Socket.hpp"
+#include "Request.hpp"
 
 #define HTTP "HTTP/1.1"
 #define STATUS "200 OK"
@@ -40,6 +41,7 @@ int main(void)
 		int fd = socket.socket_accept();
 		int bytes_read = read(fd, buffer, 1024);
 		std::cout << buffer << std::endl;
+        Request request(buffer);
 		send_response(fd, "Hello hello there");
 		close(fd);
 		if (std::string(buffer) == "exit")
