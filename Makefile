@@ -6,29 +6,25 @@
 #    By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/07/17 15:05:47 by lkindere          #+#    #+#              #
-#    Updated: 2022/09/23 17:12:57 by lkindere         ###   ########.fr        #
+#    Updated: 2022/09/24 16:44:00 by lkindere         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SERVER :=	./server
-CLIENT :=	./client
 
-S_SRCS :=	Socket.cpp		\
+S_SRCS :=	main.cpp		\
+			Socket.cpp		\
 			Request.cpp		\
-			server.cpp		\
 
-# C_SRCS :=	Socket.cpp		\
-# 			client.cpp
-
-all: client server
+all: server
 
 server: $(S_SRCS) Socket.hpp Request.hpp
 	c++ $(S_SRCS) -o $(SERVER)
 
-# client: $(C_SRCS) Socket.hpp
-# 	c++ $(C_SRCS) -o $(CLIENT)
+debug: $(S_SRCS) Socket.hpp Request.hpp
+	c++ $(S_SRCS) -o $(SERVER) -DDEBUG
 
 clean:
-	rm -f $(SERVER) $(CLIENT)
+	rm -f $(SERVER)
 
 re: clean server

@@ -6,14 +6,14 @@
 /*   By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/17 01:04:33 by lkindere          #+#    #+#             */
-/*   Updated: 2022/07/17 15:14:23 by lkindere         ###   ########.fr       */
+/*   Updated: 2022/09/23 18:15:39 by lkindere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #define IP INADDR_ANY
-#define PORT 8080
+#define PORT 80
 #define BACKLOG	10
 
 #include <cstring>
