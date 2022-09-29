@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <deque>
 
 #define BUFFER_SIZE 50000
 
@@ -33,20 +34,13 @@ class Request
         void printRequest(std::ostream& stream) const;
 
     private:
-        void readRequest();
-        std::string parseStart(const std::string& input);
-        std::string parseVariables(const std::string& input);
-        std::string parseMessage(const std::string& input);
-
-        int getMethod(const std::string& input);
-        int getURI(const std::string& input, int index);
-        int getProtocol(const std::string& input, int index);
-        std::string nextLine(const std::string& input) const;
-
+        std::deque<std::string> readRequest();
+        void parseStart(std::deque<std::string>& lines);
+        void parseVariables(std::deque<std::string>& lines);
+        void parseMessage(std::deque<std::string>& lines);
 
     private:
         int                                                 _fd;
-        std::string                                         _buffer;
         e_methods                                           _method;
         std::string                                         _URI;
         std::string                                         _protocol;
