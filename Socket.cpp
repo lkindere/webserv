@@ -6,7 +6,7 @@
 /*   By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/17 01:46:49 by lkindere          #+#    #+#             */
-/*   Updated: 2022/07/17 15:14:57 by lkindere         ###   ########.fr       */
+/*   Updated: 2022/09/29 02:00:22 by lkindere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,20 @@ Socket::Socket(int domain, int type, int protocol) {
 }
 
 Socket::~Socket(){
-	std::cout << "Socket closed\n";
-	close(fd);
+    socket_close();
+}
+
+void Socket::socket_close(){
+    close(fd);
+    std::cout << "Socket closed\n";
 }
 
 //Starts listening on the constructed socket
 void Socket::socket_listen(){
-	if (bind(fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+	if (bind(fd, (struct sockaddr *)&address, sizeof(address)) < 0){
+        std::cout << strerror(errno) << std::endl;
 		throw(std::runtime_error("Failed to bind socket"));	
+    }
 	if (listen(fd, BACKLOG) < 0)
 		throw(std::runtime_error("Failed to listen to socket"));
 }

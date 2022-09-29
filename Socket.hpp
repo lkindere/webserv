@@ -6,7 +6,7 @@
 /*   By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/17 01:04:33 by lkindere          #+#    #+#             */
-/*   Updated: 2022/09/23 18:15:39 by lkindere         ###   ########.fr       */
+/*   Updated: 2022/09/29 02:00:12 by lkindere         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,4 +44,5 @@ class Socket
 		void	socket_connect();
 		size_t	socket_send(const void *buf, size_t len, int flags = 0);
 
+        void    socket_close();
 };
