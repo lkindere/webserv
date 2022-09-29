@@ -8,8 +8,11 @@
 #include <sstream>
 #include <algorithm>
 
+#include "Structs.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+
+#include "CGIthingy.hpp"
 
 class Server
 {
@@ -17,8 +20,10 @@ class Server
         Server(const char* configpath){
             parseConfig(configpath);
 #ifdef DEBUG
-            std::cout << "Path: " << _path << std::endl;
-            std::cout << "Root: " << _root << std::endl;
+            std::cout << "Path: " << _paths.pages << std::endl;
+            std::cout << "CGI: " << _paths.CGI << std::endl;
+            std::cout << "Upload: " << _paths.upload << std::endl;
+            std::cout << "Index: " << _index << std::endl;
             for (std::set<std::string>::iterator it = _pages.begin(); it != _pages.end(); ++it)
                 std::cout << "Page: " << *it << std::endl;
             for (std::map<int, std::string>::iterator it = _errors.begin(); it != _errors.end(); ++it)
@@ -27,7 +32,7 @@ class Server
         }
 
     public:
-        Response sendResponse(const Request& request){
+        int sendResponse(const Request& request){
             if (request.method() == GET)
                 return getMethod(request);
             if (request.method() == POST)
@@ -38,11 +43,24 @@ class Server
         }
 
     private:
-
-        Response getMethod(const Request& request) const {
-            std::cout << "Root: " << _root << std::endl;
+        int getMethod(const Request& request) {
+            // if (getType(request.URI()) == "CGI"){
+            //     std::set<std::string>::const_iterator it(std::find(_CGI.begin(), _CGI.end(), request.URI()));
+            //     if (it == _CGI.end())
+            //         return errorPage(request, 404, "404 Not Found");
+            //     CGIstatus status = CGIthingy().generateResponse(request, _paths, _paths.CGI + *it);
+            //     for (std::set<std::string>::iterator it = status.uploads.begin(); it != status.uploads.end(); ++it)
+            //         addUpload(*it);
+            //     return Response(request.fd(), status.status, status.type, status.message).send();
+            // }
+            // if (request.URI().find(_paths.upload) != std::string::npos){
+            //     // std::cout << "Searching for: " << request.URI() << std::endl;
+            //     // for (std::set<std::string>::iterator it = _uploads.begin(); it != _uploads.end(); ++it){
+            //     //     std::cout << "UPLOAD: " << *it << std::endl;
+            //     // }
+            // }
             if (request.URI() == "/")
-                return Response(request.fd(), "200 OK", getType(_root), getString(_path + _root));
+                return Response(request.fd(), "200 OK", getType(_index), getString(_paths.pages + _index)).send();
 #ifdef DEBUG
             std::cout << "ALL PAGES:\n";
             for (std::set<std::string>::const_iterator it = _pages.begin(); it != _pages.end(); ++it)
@@ -53,44 +71,54 @@ class Server
             std::set<std::string>::const_iterator it(std::find(_pages.begin(), _pages.end(), request.URI()));
             if (it == _pages.end())
                 return errorPage(request, 404, "404 Not Found");
-            return Response(request.fd(), "200 OK", getType(_path + *it), getString(_path + *it));
-        }
-        
-        Response postMethod(const Request& request) const {
-            return Response(request.fd(), "0", "0", "0"); //Placeholder
+            return Response(request.fd(), "200 OK", getType(_paths.pages + *it), getString(_paths.pages + *it)).send();
         }
 
-        Response deleteMethod(const Request& request) const {
-            return Response(request.fd(), "0", "0", "0"); //Placeholder
+        int postMethod(const Request& request) {
+            if (getType(request.URI()) == "CGI"){
+                std::set<std::string>::const_iterator it(std::find(_CGI.begin(), _CGI.end(), request.URI()));
+                if (it == _CGI.end())
+                    return errorPage(request, 404, "404 Not Found");
+                CGIstatus status = CGIthingy().generateResponse(request, _paths, _paths.CGI + *it);
+                // for (std::set<std::string>::iterator it = status.uploads.begin(); it != status.uploads.end(); ++it)
+                //     addUpload(*it);
+                return Response(request.fd(), status.status, status.type, status.message).send();
+            }
+            return Response(request.fd(), "0", "0", "0").send(); //Placeholder
         }
 
-        Response errorPage(const Request& request, int errorcode, const char* errormsg) const {
+        int deleteMethod(const Request& request) const {
+            return Response(request.fd(), "0", "0", "0").send(); //Placeholder
+        }
+
+        int errorPage(const Request& request, int errorcode, const char* errormsg) const {
             std::map<int, std::string>::const_iterator it(_errors.find(errorcode));
             if (it == _errors.end())
-                return Response(request.fd(), errormsg, "text/plain", errormsg);
-            std::cout << "Sending response: " << getString(it->second);
-            return Response(request.fd(), errormsg, getType(it->second), getString(_path + it->second));
+                return Response(request.fd(), errormsg, "text/plain", errormsg).send();
+            return Response(request.fd(), errormsg, getType(it->second), getString(_paths.pages + it->second)).send();
         }
 
         //Switch to mime.types thingy like NGINX
         std::string getType(const std::string& path) const {
-            if (path.find(".gif", 0) != path.npos)
+            if (path.find(".gif") != path.npos)
                 return std::string("image/gif");
-            if (path.find(".jpg", 0) != path.npos)
+            if (path.find(".jpg") != path.npos)
                 return std::string("image/gif");
-            if (path.find(".jpeg", 0) != path.npos)
+            if (path.find(".jpeg") != path.npos)
                 return std::string("image/gif");
-            if (path.find(".html", 0) != path.npos)
+            if (path.find(".html") != path.npos)
                 return std::string("text/html");
+            if (path.find(".cgi") != path.npos)
+                return std::string("CGI");
             return std::string("text/plain");
         }
 
         std::string getString(const std::string& path) const {
-            std::cout << "\nGETTING STRING FROM: " << path << std::endl;
             std::ifstream file(path);
+            if (file.is_open() == false)
+                return std::string();
             std::stringstream ss;
             ss << file.rdbuf();
-            std::cout << "STRING: " << ss << std::endl;
             return ss.str();
         }
 
@@ -103,12 +131,20 @@ class Server
                     break;
                 if (line.compare(0, 2, "//") == 0)
                     continue;
-                if (line.compare(0, 6, "PATH: ") == 0){
-                    _path = &line[6];
+                if (line.compare(0, 7, "INDEX: ") == 0){
+                    _index = "/" + std::string(&line[7]);
                     continue;
                 }
-                if (line.compare(0, 6, "ROOT: ") == 0){
-                    _root = "/" + std::string(&line[6]);
+                if (line.compare(0, 6, "PATH: ") == 0){
+                    _paths.pages = &line[6];
+                    continue;
+                }
+                if (line.compare(0, 8, "UPLOAD: ") == 0){
+                    _paths.upload = &line[8];
+                    continue;
+                }
+                if (line.compare(0, 10, "CGI_PATH: ") == 0){
+                    _paths.CGI = std::string(std::string(&line[10]));
                     continue;
                 }
                 if (line.compare(0, 7, "PAGES: ") == 0){
@@ -122,21 +158,40 @@ class Server
                         _pages.insert("/" + line.substr(0, space));
                         line = &line[++space];
                     }
+                    continue;
+                }
+                if (line.compare(0, 5, "CGI: ") == 0){
+                    line = &line[5];
+                    while (line.size() != 0){
+                        size_t space = line.find(' ', 0);
+                        if (space == std::string::npos){
+                            _CGI.insert("/" + line);
+                            break;
+                        }
+                        _CGI.insert("/" + line.substr(0, space));
+                        line = &line[++space];
+                    }
+                    continue;
                 }
                 if (isnumber(line[0])){
                     int code = atoi(line.data());
                     if (code < 100 || code > 999)
                         return -1;
                     _errors.insert(std::make_pair(code, "/" + std::string(&line[5])));
-                    continue;
                 }  
             }
             return 0; //Add some kind of error hadling in misconfigurations later?
         }
 
+        void addUpload(const std::string& path){
+            // _uploads.insert("/" + _paths.upload + "/" + path);
+        }
+
     private:
-        std::string                         _path;
-        std::string                         _root;
+        PATHS                               _paths;
+        std::string                         _index;
+        std::set<std::string>               _CGI;
         std::set<std::string>               _pages;
+        std::set<std::string>               _uploads;
         std::map<int, std::string>          _errors;
 };

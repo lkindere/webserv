@@ -1,15 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>File Upload Form</title>
-</head>
+<html>
 <body>
-    <form action="upload-manager.php" method="post" enctype="multipart/form-data">
-        <h2>Upload File</h2>
-        <label for="fileSelect">Filename:</label>
-        <input type="file" name="photo" id="fileSelect">
-        <input type="submit" name="submit" value="Upload">
-    </form>
+
+<form action="UPLOAD.cgi" method="post" enctype="multipart/form-data">
+  <input type="file" name="File" id="File">
+  <input type="submit" value="Upload File" name="submit">
+</form>
+
 </body>
 </html>

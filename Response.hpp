@@ -13,48 +13,27 @@
 class Response
 {
     public:
-        Response(int fd, const std::string& status, const std::string& type, const std::string& message){
-            std::stringstream ss;
-#ifdef DEBUG
-            std::cout << "Message size: " << message.size() << std::endl;
-            std::cout << "Sending response:\n";
-            std::cout << HTTP << ' ' << status << '\n' << "Content-Type: " << type << '\n'
-                    << "Content-Length: " << message.size() << "\n\n" << message << std::endl;
+        Response(int fd, const std::string& status, const std::string& type, const std::string& message)
+            : _fd(fd), _status(status), _type(type), _message(message) {}
 
+        int send() const {
+#ifdef DEBUG
+            std::cout << "\n\nRESPONSE:\n\n";
+            std::cout << "Message size: " << _message.size() << std::endl;
+            std::cout << "Sending response:\n";
+            std::cout << HTTP << ' ' << _status << '\n' << "Content-Type: " << _type << '\n'
+                    << "Content-Length: " << _message.size() << "\n\n" << _message << std::endl;
 #endif
-            ss << HTTP << ' ' << status << '\n' << "Content-Type: " << type << '\n'
-                    << "Content-Length: " << message.size() << "\n\n" << message;
+            std::stringstream ss;
+            ss << HTTP << ' ' << _status << '\n' << "Content-Type: " << _type << '\n'
+                    << "Content-Length: " << _message.size() << "\n\n" << _message;
             std::string response(ss.str());
-            write(fd, response.c_str(), response.length());
+            return write(_fd, response.c_str(), response.length());
         }
 
 
     private:
-        // std::string pageStr(const char* path) const {
-        //     std::ifstream page(path);
-        //     std::stringstream ss;
-        //     ss << page.rdbuf();
-        //     return ss.str();
-        // }
-
-        // void badRequest() const {
-        //     ;
-        // }
-
-        // void notFound() const {
-        //     send_response(_fd, pageStr("pages/404.html"));
-        // }
-
-        // void index() const {
-        //     send_response(_fd, pageStr("pages/index.html"));
-        // }
-
-        // void nyan() const {
-        //     send_response(_fd, pageStr("pages/nyan.gif"), "image/gif");
-        // }
-
-
-    private:
+        int         _fd;
         std::string _status;
         std::string _type;
         std::string _message;

@@ -6,7 +6,7 @@
 #    By: lkindere <lkindere@student.42heilbronn.    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/07/17 15:05:47 by lkindere          #+#    #+#              #
-#    Updated: 2022/09/24 16:44:00 by lkindere         ###   ########.fr        #
+#    Updated: 2022/09/26 23:22:57 by lkindere         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,10 +16,11 @@ S_SRCS :=	main.cpp		\
 			Socket.cpp		\
 			Request.cpp		\
 
-all: server
+all: server CGI
 
 server: $(S_SRCS) Socket.hpp Request.hpp
 	c++ $(S_SRCS) -o $(SERVER)
+	c++ CGI/Upload.cpp -o CGI/UPLOAD.cgi
 
 debug: $(S_SRCS) Socket.hpp Request.hpp
 	c++ $(S_SRCS) -o $(SERVER) -DDEBUG
@@ -27,4 +28,4 @@ debug: $(S_SRCS) Socket.hpp Request.hpp
 clean:
 	rm -f $(SERVER)
 
-re: clean server
+re: clean all

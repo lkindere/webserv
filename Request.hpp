@@ -4,11 +4,12 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <utility>
+#include <deque>
 #include <vector>
 #include <deque>
+#include <map>
 
-#define BUFFER_SIZE 50000
+#define BUFFER_SIZE 65536
 
 enum e_methods
 {
@@ -28,7 +29,7 @@ class Request
         e_methods method() const { return _method; }
         const std::string& URI() const { return _URI; }
         const std::string& protocol() const { return _protocol; }
-        const std::vector<std::pair<std::string, std::string> >& variables() { return _variables; }
+        const std::map<std::string, std::string>& variables() { return _variables; }
         const std::string& message() const { return _message; }
 
         void printRequest(std::ostream& stream) const;
@@ -44,7 +45,7 @@ class Request
         e_methods                                           _method;
         std::string                                         _URI;
         std::string                                         _protocol;
-        std::vector<std::pair<std::string, std::string> >   _variables;
+        std::map<std::string, std::string>                  _variables;
         std::string                                         _message;
 
 };

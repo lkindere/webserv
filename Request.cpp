@@ -43,7 +43,7 @@ Request::Request(int fd)
     std::cout << "URI: " << _URI << std::endl;
     std::cout << "Protocol: " << _protocol << '\n' << std::endl;
     std::cout << "Obtained variables:\n";
-    for (std::vector<std::pair<std::string, std::string> >::iterator it = _variables.begin(); it != _variables.end(); ++it)
+    for (std::map<std::string, std::string>::const_iterator it = _variables.begin(); it != _variables.end(); ++it)
         std::cout << it->first << ' ' << it->second << std::endl;
     std::cout << "\nMessage:\n";
     std::cout << _message << '\n' <<  std::endl;
@@ -79,12 +79,11 @@ void Request::printRequest(std::ostream& stream) const {
             ss << "INVALID ";
     }
     ss << _URI << ' ' << _protocol << '\n';
-    for (std::vector<std::pair<std::string, std::string> >::const_iterator it = _variables.begin();
-         it != _variables.end(); ++it) {
+    for (std::map<std::string, std::string>::const_iterator it = _variables.begin();
+        it != _variables.end(); ++it) {
         ss << it->first << ": " << it->second << '\n';
     }
-    stream << ss.rdbuf() << '\n'
-           << _message;
+    stream << ss.rdbuf() << '\n' << _message;
 }
 
 // Splits first line of request to method/URI/protocol
@@ -108,7 +107,7 @@ void Request::parseVariables(std::deque<std::string>& lines) {
             _method = INVALID;
             return;
         }
-        _variables.push_back(std::make_pair(current.at(0), current.at(1)));
+        _variables.insert(std::make_pair(current.at(0), current.at(1)));
         std::cout << "\nLine: " << lines.front() << std::endl;;
         lines.pop_front();
     }
@@ -117,34 +116,21 @@ void Request::parseVariables(std::deque<std::string>& lines) {
 }
 
 // Parses message based on Content Length if there is one and the length is specified
-// BROKEN
-std::string Request::parseMessage(std::deque<std::string>& lines) {
-    //CAN'T FIX THIS AT HOME, NEED MAH SCHOOL MAC DATA
-
-
-
-//     std::vector<std::pair<std::string, std::string> >::iterator it = _variables.begin();
-//     for (; it != _variables.end(); ++it) {
-//         if (it->first == "Content-Length:")
-//             break;
-//     }
-//     if (it == _variables.end()) {
-//         // No content length specified, not reading further
-//         return std::string();
-//     }
-//     size_t length = atoll(it->second.c_str());
-//     std::string message(input.substr(0, length));
-//     while (message.length() < length) {
-//         length -= message.length();
-//         int bytes_read = read(_fd, (void*)_buffer.data(), BUFFER_SIZE);
-//         if (bytes_read <= 0)
-//             break;
-//         message += _buffer.substr(0, length);
-//     }
-// #ifdef DEBUG
-//     std::cout << "\n\nEXPECTED LENGTH: " << length << "\n\n";
-//     std::cout << "\n\nFINAL MESSAGE LENGTH: " << message.length() << "\n\n";
-// #endif
-//     _buffer.clear();
-//     return message;
+void Request::parseMessage(std::deque<std::string>& lines) {
+    if (_method == GET || _method == INVALID)
+        return;
+    std::map<std::string, std::string>::const_iterator it(_variables.find("Content-Length"));
+    if (it == _variables.end())
+        return;
+    size_t content_length = atoll(it->second.c_str());
+    while (lines.size() != 0 && _message.length() + lines.front().length() <= content_length){
+        _message.append(lines.front());
+        lines.pop_front();
+    }
+    if (lines.size() != 0 && _message.length() < content_length)
+        _message.append(lines.front(), content_length - _message.length());
+#ifdef DEBUG
+    std::cout << "\n\nEXPECTED LENGTH: " << content_length << "\n\n";
+    std::cout << "\n\nFINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
+#endif
 }
