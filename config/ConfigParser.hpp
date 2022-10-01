@@ -10,11 +10,14 @@
  */
 struct GlobalConfig
 {
-    size_t      client_max_body_size;
+    size_t                          client_max_body_size;
+    std::string                     error_root;
+    std::map<short, std::string>    error_pages;
 };
 
 /**
  * @brief Location block configuration
+ * @param uri: request path
  * @param root: starting path for this location
  */
 struct LocationConfig
@@ -22,16 +25,6 @@ struct LocationConfig
     std::string root;
 };
 
-/**
- * @brief Error page configurations
- * @param root: starting path for all error pages
- * @param pages: map<error_code, page.html>
- */
-struct ErrorConfig
-{
-    std::string root;
-    std::map<short, std::string>  pages;
-};
 
 /**
  * @brief Server configuration
@@ -39,7 +32,6 @@ struct ErrorConfig
  * @param port: port
  * @param root: starting path used if none are defined in further blocks
  * @param locations: map<URL, LocationConfig struct>
- * @param error: ErrorConfig struct
  */
 struct ServerConfig
 {
@@ -47,8 +39,6 @@ struct ServerConfig
     int         port;
     std::string root;
     std::map<std::string, LocationConfig> locations;
-    ErrorConfig error;
-
 };
 
 /**
