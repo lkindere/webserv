@@ -75,7 +75,6 @@ struct ConfigData
     ConfigStatus                status;
     GlobalConfig                global;
     std::vector<ServerConfig>   servers;
-
 };
 
 /**
