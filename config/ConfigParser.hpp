@@ -22,6 +22,7 @@ struct GlobalConfig
  */
 struct LocationConfig
 {
+    std::string uri;
     std::string root;
 };
 
@@ -38,7 +39,7 @@ struct ServerConfig
     std::string host;
     int         port;
     std::string root;
-    std::map<std::string, LocationConfig> locations;
+    std::vector<LocationConfig> locations;
 };
 
 /**
@@ -67,20 +68,4 @@ struct ConfigData
     std::vector<ServerConfig>   servers;
 };
 
-/**
- * @brief Parses config file
- * That's it for now idk what to write here tbh
- */
-class ConfigParser
-{
-    public:
-        ConfigParser(const std::string& path);
-
-        ConfigData parse() const;
-
-    private:
-        ConfigData invalid(int line, const std::string& msg) const;
-    
-    private:
-        std::string _path;
-};
+ConfigData parseConfig(const std::string& path);
