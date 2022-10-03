@@ -1,7 +1,6 @@
-#include "ConfigParser.hpp"
+#include "Config.hpp"
 
 #include <iostream>
-//  c++ main.cpp ConfigParser.cpp -DDEBUG
 
 int main(void){
     ConfigData ret(parseConfig("new.conf"));
