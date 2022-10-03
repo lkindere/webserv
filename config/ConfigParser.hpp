@@ -1,71 +1,51 @@
 #pragma once
 
+//Only used for actual parsing code no need to include anywhere outside of Config.cpp
+
 #include <string>
-#include <vector>
-#include <map>
+#include <deque>
 
-/**
- * @brief Global parameters that affect all servers
- * @param client_max_body_size: defines max request message size
- */
-struct GlobalConfig
+#include "Config.hpp"
+
+enum e_token
 {
-    size_t                          client_max_body_size;
-    std::string                     error_root;
-    std::map<short, std::string>    error_pages;
+    BR_OPEN = 0,
+    BR_CLOSE = 1,
+    ROOT = 2,
+    HOST = 3,
+    LISTEN = 4,
+    SERVER = 5,
+    LOCATION = 6,
+    UPLOADS = 7,
+    METHODS = 8,
+    SERVER_NAME = 9,
+    CGI_EXTENSIONS = 10,
+    REDIRECT = 11,
+    VALUE = 12
 };
 
-/**
- * @brief Location block configuration
- * @param uri: request path
- * @param root: starting path for this location
- */
-struct LocationConfig
+struct Token
 {
-    std::string uri;
-    std::string root;
+    e_token         type;
+    std::string     value;
+
+    Token(e_token type, const std::string& value) : type(type), value(value) {}
+};
+
+struct Line
+{
+    std::deque<Token>   tokens;
+    int                 index;
+
+    Line(const std::deque<Token>& tokens, size_t index) : tokens(tokens), index(index) {}
 };
 
 
-/**
- * @brief Server configuration
- * @param host: host
- * @param port: port
- * @param root: starting path used if none are defined in further blocks
- * @param locations: map<URL, LocationConfig struct>
- */
-struct ServerConfig
-{
-    std::string host;
-    int         port;
-    std::string root;
-    std::vector<LocationConfig> locations;
-};
+int         readTokens(const std::string& path, std::deque<Line>& lines, ConfigData& conf);
+int         parseLines(std::deque<Line>& lines, ConfigData& conf);
+int         checkConfig(ConfigData& conf);
+ConfigData  invalid(ConfigData& conf);
 
-/**
- * @brief Status of parsing
- * @param success: true if no errors
- * @param error_line: line where error occured if applicable
- * @param error_msg: error description
- */
-struct ConfigStatus
-{
-    bool        success;
-    int         error_line;
-    std::string error_msg;
-};
-
-/**
- * @brief All config data parsed from config file
- * @param status: ConfigStatus struct
- * @param global: GlobalConfig struct
- * @param servers: vector<ServerConfig struct> per server
- */
-struct ConfigData
-{
-    ConfigStatus                status;
-    GlobalConfig                global;
-    std::vector<ServerConfig>   servers;
-};
-
-ConfigData parseConfig(const std::string& path);
+#ifdef DEBUG
+    void printConfig(const ConfigData& conf);  
+#endif

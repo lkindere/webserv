@@ -1,60 +1,26 @@
+#include "Config.hpp"
 #include "ConfigParser.hpp"
 
 #include <fstream>
 #include <deque>
 #include <set>
 
-// #ifdef DEBUG
+#ifdef DEBUG
 # include <iostream>
-// #endif
+#endif
 
 #define CLIENT_BODY_SIZE_MAX 1073741824 //1GB
 #define CONFIG_FILE_SIZE_MAX 100000
 
 using namespace std;
 
-enum line_status
-{
-    VALID,
-    PARSEABLE,
-    INVALID
-};
-
-enum e_token
-{
-    BR_OPEN = 0,
-    BR_CLOSE = 1,
-    ROOT = 2,
-    HOST = 3,
-    LISTEN = 4,
-    SERVER = 5,
-    LOCATION = 6,
-    VALUE = 7
-};
-
-struct Token
-{
-    e_token type;
-    string  value;
-
-    Token(e_token type, const string& value) : type(type), value(value) {}
-};
-
-struct Line
-{
-    deque<Token>  tokens;
-    int           index;
-
-    Line(const deque<Token>& tokens, size_t index) : tokens(tokens), index(index) {}
-};
-
 /**
  * @brief Because initializer list constructors are c++11
  * @return vector<string> pairs [index] to e_token except for VALUE
  */
-vector<string> tokenStr(){
+static vector<string> tokenStr(){
     vector<string> tstr;
-    tstr.reserve(7);
+    tstr.reserve(12);
     tstr.push_back("{");
     tstr.push_back("}");
     tstr.push_back("root");
@@ -62,6 +28,11 @@ vector<string> tokenStr(){
     tstr.push_back("listen");
     tstr.push_back("server");
     tstr.push_back("location");
+    tstr.push_back("uploads");
+    tstr.push_back("methods");
+    tstr.push_back("server_name");
+    tstr.push_back("cgi_extensions");
+    tstr.push_back("redirect");
     return tstr;
 }
 
@@ -110,6 +81,113 @@ static deque<Token> tokenize(const string& line){
 }
 
 /**
+ * @brief Saves lines
+ * @param conf ConfigData to update
+ * @param msg message to use
+ * @return int always 1
+ */
+static int setError(ConfigData& conf, int index, const string& msg){
+    conf.status.error_line = index;
+    conf.status.error_msg = msg;
+    return 1;
+}
+
+/**
+ * @brief Returns invalid ConfigData
+ * @param conf ConfigData to use for error_line and error_msg
+ * @return ConfigData 
+ */
+ConfigData invalid(ConfigData& conf){
+    ConfigData ret;
+    ret.status.success = false;
+    ret.status.error_line = conf.status.error_line;
+    ret.status.error_msg = conf.status.error_msg;
+    return ret;
+}
+
+/**
+ * @brief Removes a semicolon from the end if there is one
+ */
+static string noSemicolon(const std::string& str){
+    if (str.length() != 0 && str.back() == ';')
+        return str.substr(0, str.length() - 1);
+    return str;
+}
+
+/**
+ * @brief Checks for valid block start for SERVER/LOCATION
+ * @param line a line
+ * @return int 1 on valid 0 on invalid
+ */
+static int validBlockStart(const Line& line){
+    if (line.tokens.size() < 2)
+        return 0;
+    if (line.tokens.size() == 2){
+        if (line.tokens[0].type == SERVER && line.tokens[1].type == BR_OPEN)
+            return 1;
+        return 0;
+    }
+    if (line.tokens.size() == 3){
+        if (line.tokens[0].type == LOCATION && line.tokens[1].type == VALUE
+            && line.tokens[2].type == BR_OPEN)
+            return 1;
+        return 0;
+    }
+    return 0;
+}
+
+/**
+ * @brief Checks for valid block end
+ * @param line a line
+ * @return int 1 on valid 0 on invalid
+ */
+static int validBlockEnd(const Line& line){
+    if (line.tokens.size() == 1 && line.tokens[0].type == BR_CLOSE)
+        return 1;
+    return 0;
+}
+
+/**
+ * @brief Checks if all tokens are VALUE type
+ * @param tokens 
+ * @return int 1 true 0 false
+ */
+static int allValues(const deque<Token>& tokens){
+    for (size_t i = 0; i < tokens.size(); ++i)
+        if (tokens[i].type != VALUE)
+            return 0;
+    return 1;
+}
+
+/**
+ * @brief Splits part of lines cutting it off into segment
+ * @param lines all lines input
+ * @param segment segment block
+ * @param conf 
+ * @return int 1 on error 0 on success
+ */
+static int getSegment(deque<Line>& lines, deque<Line>& segment, ConfigData& conf){
+    if (validBlockStart(lines[0]) == 0)
+        return setError(conf, lines[0].index, "Syntax error");
+    size_t i = 0;
+    int braces_open = 1;
+    int braces_closed = 0;
+    while (++i < lines.size()){
+        if (validBlockEnd(lines[i])){
+            ++braces_closed;
+            if (braces_open == braces_closed){
+                segment.assign(lines.begin(), lines.begin() + i);
+                lines.erase(lines.begin(), lines.begin() + i + 1);
+                return 0;
+            }
+        }
+        if (validBlockStart(lines[i]))
+            ++braces_open;
+    }
+    return setError(conf, lines[0].index, "Unclosed braces");
+}
+
+/**
  * @brief atoll but accepts multipliers: K/KB, M/MB, G/GB
  * @param str 
  * @return long long 
@@ -134,23 +212,12 @@ static long long multitoll(const std::string& str){
 }
 
 /**
- * @brief Saves lines
- * @param conf ConfigData to update
- * @param msg message to use
- * @return int always 1
+ * @brief Adds a location block
+ * @param lines pre-split location segment
+ * @param server server struct to add to
+ * @param conf 
+ * @return int 1 on error 0 on success
  */
-static int setError(ConfigData& conf, int index, const string& msg){
-    conf.status.error_line = index;
-    conf.status.error_msg = msg;
-    return 1;
-}
-
-static string noSemicolon(const std::string& str){
-    if (str.length() != 0 && str.back() == ';')
-        return str.substr(0, str.length() - 1);
-    return str;
-}
-
 static int addLocation(deque<Line>& lines, ServerConfig& server, ConfigData& conf){
     LocationConfig location;
     location.uri = lines[0].tokens[1].value;
@@ -173,6 +240,47 @@ static int addLocation(deque<Line>& lines, ServerConfig& server, ConfigData& con
                 lines.pop_front();
                 break;
             }
+            case REDIRECT:{
+                if (tokens.size() != 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                location.redirect = noSemicolon(tokens[1].value);
+                lines.pop_front();
+                break;
+            }
+            case UPLOADS:{
+                if (tokens.size() != 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                location.uploads = noSemicolon(tokens[1].value);
+                lines.pop_front();
+                break;
+            }
+            case METHODS:{
+                if (tokens.size() < 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                for (size_t i = 1; i < tokens.size(); ++i){
+                    e_method method = toEmethod(tokens[i].value);
+                    if (method == INVALID)
+                        return setError(conf, lines[0].index, "Invalid method");
+                    if (find(location.methods.begin(), location.methods.end(), method)
+                        != location.methods.end())
+                        return setError(conf, lines[0].index, "Multiple definitions of same method");
+                    location.methods.push_back(method);
+                }
+                lines.pop_front();
+                break;
+            }
+            case CGI_EXTENSIONS:{
+                if (tokens.size() < 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                for (size_t i = 1; i < tokens.size(); ++i){
+                    if (find(location.cgi_extensions.begin(), location.cgi_extensions.end(), tokens[i].value)
+                        != location.cgi_extensions.end())
+                        return setError(conf, lines[0].index, "Multiple definitions of same extension");
+                    location.cgi_extensions.push_back(tokens[i].value);
+                }
+                lines.pop_front();
+                break;
+            }
             default:
                 return setError(conf, lines[0].index, "Invalid token");
         }
@@ -181,50 +289,12 @@ static int addLocation(deque<Line>& lines, ServerConfig& server, ConfigData& con
     return 0;
 }
 
-static int validBlockStart(const Line& line){
-    if (line.tokens.size() < 2)
-        return 0;
-    if (line.tokens.size() == 2){
-        if (line.tokens[0].type == SERVER && line.tokens[1].type == BR_OPEN)
-            return 1;
-        return 0;
-    }
-    if (line.tokens.size() == 3){
-        if (line.tokens[0].type == LOCATION && line.tokens[1].type == VALUE
-            && line.tokens[2].type == BR_OPEN)
-            return 1;
-        return 0;
-    }
-    return 0;
-}
-
-static int validBlockEnd(const Line& line){
-    if (line.tokens.size() == 1 && line.tokens[0].type == BR_CLOSE)
-        return 1;
-    return 0;
-}
-
-static int getSegment(deque<Line>& lines, deque<Line>& segment, ConfigData& conf){
-    if (validBlockStart == 0)
-        return setError(conf, lines[0].index, "Syntax error");
-    size_t i = 0;
-    int braces_open = 1;
-    int braces_closed = 0;
-    while (++i < lines.size()){
-        if (validBlockEnd(lines[i])){
-            ++braces_closed;
-            if (braces_open == braces_closed){
-                segment.assign(lines.begin(), lines.begin() + i);
-                lines.erase(lines.begin(), lines.begin() + i + 1);
-                return 0;
-            }
-        }
-        if (validBlockStart(lines[i]))
-            ++braces_open;
-    }
-    return setError(conf, lines[0].index, "Unclosed braces");
-}
-
+/**
+ * @brief Adds a server block
+ * @param lines pre-split server segment
+ * @param conf conf block to add to
+ * @return int 1 on error 0 on success
+ */
 static int addServer(deque<Line>& lines, ConfigData& conf){
     lines.pop_front();
 #ifdef DEBUG
@@ -260,6 +330,14 @@ static int addServer(deque<Line>& lines, ConfigData& conf){
                 lines.pop_front();
                 break;
             }
+            case SERVER_NAME:{
+                if (tokens.size() < 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                for (size_t i = 1; i < tokens.size(); ++i)
+                    server.server_names.push_back(noSemicolon(tokens[i].value));
+                lines.pop_front();
+                break;
+            }
             case LOCATION:{
                 deque<Line> segment;
                 if (getSegment(lines, segment, conf) != 0)
@@ -276,6 +354,12 @@ static int addServer(deque<Line>& lines, ConfigData& conf){
     return 0;
 }
 
+/**
+ * @brief Adds a global value
+ * @param lines single line
+ * @param conf conf to add to
+ * @return int 1 on error 0 on success
+ */
 static int addGlobal(Line& line, ConfigData& conf){
     if (line.tokens.size() < 2)
         return setError(conf, line.index, "Invalid format");
@@ -314,18 +398,12 @@ static int addGlobal(Line& line, ConfigData& conf){
 }
 
 /**
- * @brief Checks if all tokens are VALUE type
- * @param tokens 
- * @return int 1 true 0 false
+ * @brief Checks line by line adding global/server blocks
+ * @param lines all lines
+ * @param conf 
+ * @return int 1 on error 0 on success
  */
-static int allValues(const deque<Token>& tokens){
-    for (size_t i = 0; i < tokens.size(); ++i)
-        if (tokens[i].type != VALUE)
-            return 0;
-    return 1;
-}
-
-static int parseLines(deque<Line>& lines, ConfigData& conf){
+int parseLines(deque<Line>& lines, ConfigData& conf){
     while (lines.size() != 0){
         if (allValues(lines[0].tokens)){
             if (addGlobal(lines[0], conf) != 0)
@@ -345,14 +423,6 @@ static int parseLines(deque<Line>& lines, ConfigData& conf){
     return 0;
 }
 
-static ConfigData invalid(ConfigData& conf){
-    ConfigData ret;
-    ret.status.success = false;
-    ret.status.error_line = conf.status.error_line;
-    ret.status.error_msg = conf.status.error_msg;
-    return ret;
-}
-
 /**
  * @brief Reads from path, splits by newline, outputs to lines (ignores comments and newlines)
  * @param path input path
@@ -360,13 +430,13 @@ static ConfigData invalid(ConfigData& conf){
  * @param conf ConfigData& to write to
  * @return int 0 on success, 1 while setting conf status error_msg on error
  */
-static int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
+int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
     string tmp;
     tmp.resize(CONFIG_FILE_SIZE_MAX);
     ifstream file(path);
     if (file.is_open() == false)
         return setError(conf, 0, "Config file failed to open");
-    file.read(tmp.data(), CONFIG_FILE_SIZE_MAX);
+    file.read(&tmp[0], CONFIG_FILE_SIZE_MAX);
     ssize_t bytes_read = file.gcount();
     if (bytes_read <= 0)
         return setError(conf, 0, "Error while reading config file");
@@ -377,6 +447,25 @@ static int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
         if (strs[i].length() == 0 || strs[i][0] == '#')
             continue;
         lines.push_back(Line(tokenize(strs[i]), i + 1));
+    }
+    return 0;
+}
+
+int checkConfig(ConfigData& conf){
+    for (size_t i = 0; i < conf.servers.size(); ++i){
+        if (conf.servers[i].host.length() == 0) 
+            return setError(conf, 0, "Server host not set");
+        if (conf.servers[i].port == 0)
+            return setError(conf, 0, "Server port not set");
+        if (conf.servers[i].root.length() == 0)
+            return setError(conf, 0, "Server root not set");
+        for (size_t j = 0; j < conf.servers[i].locations.size(); ++j){
+            if (conf.servers[i].locations[j].uri.length() == 0)
+                return setError(conf, 0, "Location URI not set");
+            if (conf.servers[i].locations[j].root.empty()
+                && conf.servers[i].locations[j].redirect.empty())
+                return setError(conf, 0, "Location root not set");
+        }
     }
     return 0;
 }
@@ -402,32 +491,39 @@ static int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
             cerr << "Host: " << it->host << '\n';
             cerr << "Port: " << it->port << '\n';
             cerr << "Root: " << it->root << '\n';
+            cerr << "Server names: ";
+            for (vector<string>::const_iterator nm = it->server_names.begin();
+                nm != it->server_names.end(); ++nm){
+                cerr << *nm << ' ';
+            }
+            cerr << '\n';
             cerr << "\n=======LOCATIONS:======\n";
             for (vector<LocationConfig>::const_iterator loc = it->locations.begin();
-            loc != it->locations.end(); ++loc){
+                loc != it->locations.end(); ++loc){
                 cerr << "\n====LOCATION:====\n";
-                cerr << "URI:  " << loc->uri << '\n';
-                cerr << "Root: " << loc->root << '\n';
+                cerr << "URI:      " << loc->uri << '\n';
+                cerr << "Root:     " << loc->root << '\n';
+                cerr << "Redirect: " << loc->redirect << '\n';
+                cerr << "Uploads:  " << loc->uploads << '\n';
+                cerr << "Methods: ";
+                for (size_t i = 0; i < loc->methods.size(); ++i){
+                    switch (loc->methods[i]){
+                        case GET:
+                            cerr << "GET ";
+                            break;
+                        case POST:
+                            cerr << "POST ";
+                            break;
+                        default:
+                            cerr << "DELETE ";
+                    }
+                }
+                cerr << "\nCgi extensions: ";
+                for (size_t i = 0; i < loc->cgi_extensions.size(); ++i)
+                    cerr << loc->cgi_extensions[i] << ' ';
+                cerr << '\n';
             }
         }
         cerr << "\n\n";
     }
 #endif
-
-ConfigData parseConfig(const string& path){
-    ConfigData conf;
-    deque<Line> lines;
-    conf.status.error_line = 0;
-    if (readTokens(path, lines, conf) != 0)
-        return invalid(conf);
-    if (parseLines(lines, conf) != 0)
-        return invalid(conf);
-    //Add root routing if none on location check server > if none on server check default > if no default error 
-    //Add more documentation I guess and split to files
-    conf.status.success = true;
-    conf.status.error_line = 0;
-#ifdef DEBUG
-    printConfig(conf);
-#endif
-    return conf;
-}
