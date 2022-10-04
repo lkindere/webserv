@@ -1,6 +1,7 @@
 #include "Webserv.hpp"
 
 #include <iostream>
+#include <stdlib.h>
 
 int main(void){
     ConfigData conf(parseConfig("../config/new.conf"));

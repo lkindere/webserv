@@ -1,6 +1,8 @@
 #include "Config.hpp"
 #include "ConfigParser.hpp"
 
+#include <algorithm> //std::find linux
+#include <fstream> //ifstream linux
 #include <fstream>
 #include <deque>
 #include <set>
@@ -111,7 +113,7 @@ ConfigData invalid(ConfigData& conf){
  * @brief Removes a semicolon from the end if there is one
  */
 static string noSemicolon(const std::string& str){
-    if (str.length() != 0 && str.back() == ';')
+    if (str.length() != 0 && str[str.length() -1] == ';')
         return str.substr(0, str.length() - 1);
     return str;
 }
@@ -452,7 +454,7 @@ int parseLines(deque<Line>& lines, ConfigData& conf){
 int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
     string tmp;
     tmp.resize(CONFIG_FILE_SIZE_MAX);
-    ifstream file(path);
+    ifstream file(path.data());
     if (file.is_open() == false)
         return setError(conf, 0, "Config file failed to open");
     file.read(&tmp[0], CONFIG_FILE_SIZE_MAX);

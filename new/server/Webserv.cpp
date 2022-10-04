@@ -1,3 +1,5 @@
+#include <algorithm> //std::find linux
+
 #include "Webserv.hpp"
 
 #include "Response.hpp"
@@ -18,7 +20,7 @@ Server::Server(GlobalConfig* global, const ServerConfig& conf)
 }
 
 int     Server::process(){
-    for (list<Request>::iterator it = _requests.begin();
+    for (list<Request>::iterator it = _requests.begin(); //For some reason linux valgrind says invalid read of 8? Doesn't make sense maybe will do after sleep
         it != _requests.end(); ++it){
         pollfd pfd = {0};
         pfd.fd = it->fd();
@@ -44,7 +46,7 @@ void    Server::addRequest(const Request& request){
 }
 
 int     Server::checkNames(const std::string& name) const{
-    if (std::find(_config.server_names.begin(), _config.server_names.end(), name)
+    if (find(_config.server_names.begin(), _config.server_names.end(), name)
         != _config.server_names.end())
         return 1;
     return 0;

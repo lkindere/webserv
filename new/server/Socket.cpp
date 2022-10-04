@@ -1,8 +1,10 @@
 #include "Socket.hpp"
 
 #include <fcntl.h>
+#include <cstring> //memset linux
 
 #include <iostream>
+#include <string.h> //strerror linux
 #include <cerrno>
 
 int error(){
@@ -10,12 +12,14 @@ int error(){
     return -1;
 };
 
+using namespace std;
+
 Socket::Socket(const std::string& host, int port)
     : _fd(-1), _len(sizeof(_address)){
     _address.sin_family = AF_INET;
     _address.sin_addr.s_addr = inet_addr(host.data());
     _address.sin_port = htons(port);
-    std::memset(_address.sin_zero, 0, sizeof(_address.sin_zero));
+    memset(_address.sin_zero, 0, sizeof(_address.sin_zero));
 }
 
 int Socket::init() {

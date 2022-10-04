@@ -1,5 +1,7 @@
 #include "Request.hpp"
 
+#include <cstdlib> //atoll linux
+
 using namespace std;
 
 //Basically ft_split but in c++
