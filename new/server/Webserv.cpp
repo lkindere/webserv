@@ -20,23 +20,25 @@ Server::Server(GlobalConfig* global, const ServerConfig& conf)
 }
 
 int     Server::process(){
-    for (list<Request>::iterator it = _requests.begin(); //For some reason linux valgrind says invalid read of 8? Doesn't make sense maybe will do after sleep
-        it != _requests.end(); ++it){
+    list<Request>::iterator it(_requests.begin());
+    while (it != _requests.end()){
         pollfd pfd = {0};
         pfd.fd = it->fd();
         pfd.events = POLLOUT;
         int ret = poll(&pfd, 1, 0);
-        if (ret == -1)
-            return error();
         if (ret == 0)
             continue;
+        if (ret == -1)
+            return error();
         if (pfd.revents & POLLERR || pfd.revents & POLLHUP || pfd.revents & POLLNVAL)
-            _requests.erase(it);
-        if (pfd.revents & POLLOUT){
+            _requests.erase(it++);
+        else if (pfd.revents & POLLOUT){
             Response response;
             response.init(*this, *it);
-            _requests.erase(it);
+            _requests.erase(it++);
         }
+        else
+            ++it;
     }
     return 0;
 }
@@ -81,17 +83,19 @@ int Listener::accept(){
 }
 
 int Listener::process(){
-    for (list<pollfd>::iterator it = _connections.begin();
-        it != _connections.end(); ++it){
+    list<pollfd>::iterator it(_connections.begin());
+    while (it != _connections.end()){
         int ret = poll(&(*it), 1, 0);
-        if (ret == -1)
-            return error();
         if (ret == 0)
             continue;
+        if (ret == -1)
+            return error();
         if (it->revents & POLLERR || it->revents & POLLHUP || it->revents & POLLNVAL)
-            _connections.erase(it);
-        if (it->revents & POLLIN)
-            matchServer(Request(it->fd));
+            _connections.erase(it++);
+        else if (it->revents & POLLIN)
+            matchServer(Request(it++->fd));
+        else
+            ++it;
     }
     for (size_t i = 0; i < _servers.size(); ++i)
         _servers[i].process();
