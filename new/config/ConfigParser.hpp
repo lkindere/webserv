@@ -21,7 +21,9 @@ enum e_token
     SERVER_NAME = 9,
     CGI_EXTENSIONS = 10,
     REDIRECT = 11,
-    VALUE = 12
+    INDEX = 12,
+    AUTO_INDEX = 13,
+    VALUE = 14
 };
 
 struct Token

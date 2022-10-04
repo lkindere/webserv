@@ -27,6 +27,7 @@ class Request
         const std::string& protocol() const { return _protocol; }
         const std::map<std::string, std::string>& variables() { return _variables; }
         const std::string& message() const { return _message; }
+        const std::string& host() const { return _host; }
 
         void printRequest(std::ostream& stream) const;
 
@@ -41,7 +42,7 @@ class Request
         e_method                                _method;
         std::string                             _URI;
         std::string                             _protocol;
+        std::string                             _host;
         std::map<std::string, std::string>      _variables;
         std::string                             _message;
-
 };

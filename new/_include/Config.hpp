@@ -21,6 +21,8 @@ enum e_method
 /**
  * @brief Global parameters that affect all servers
  * @param client_max_body_size: defines max request message size
+ * @param error_root: starting path for error pages
+ * @param error_pages: map<error_code, page>
  */
 struct GlobalConfig
 {
@@ -33,17 +35,22 @@ struct GlobalConfig
  * @brief Location block configuration
  * @param uri: request path
  * @param root: starting path for this location
+ * @param index: default page if request is directory
+ * @param autoindex: enable directory listing
  * @param redirect: redirect path
  * @param uploads: upload path, if not set uploads disabled
  * @param methods: allowed methods for this location
  * @param cgi_extensions: files with .extension will be executed as CGI
+ * @param list_directories: if true list directories
  */
 struct LocationConfig
 {
-    std::string uri;
-    std::string root;
-    std::string redirect;
-    std::string uploads;
+    std::string                 uri;
+    std::string                 root;
+    std::string                 index;
+    bool                        autoindex;
+    std::string                 redirect;
+    std::string                 uploads;
     std::vector<e_method>       methods;
     std::vector<std::string>    cgi_extensions;
 };
@@ -59,9 +66,9 @@ struct LocationConfig
  */
 struct ServerConfig
 {
-    std::string host;
-    int         port;
-    std::string root;
+    std::string                 host;
+    int                         port;
+    std::string                 root;
     std::vector<std::string>    server_names;
     std::vector<LocationConfig> locations;
 };

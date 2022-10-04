@@ -33,6 +33,8 @@ static vector<string> tokenStr(){
     tstr.push_back("server_name");
     tstr.push_back("cgi_extensions");
     tstr.push_back("redirect");
+    tstr.push_back("index");
+    tstr.push_back("autoindex");
     return tstr;
 }
 
@@ -254,11 +256,28 @@ static int addLocation(deque<Line>& lines, ServerConfig& server, ConfigData& con
                 lines.pop_front();
                 break;
             }
+            case INDEX:{
+                if (tokens.size() != 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                location.index = noSemicolon(tokens[1].value);
+                lines.pop_front();
+                break;
+            }
+            case AUTO_INDEX:{
+                if (tokens.size() != 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                if (noSemicolon(tokens[1].value) == "on")
+                    location.autoindex = true;
+                else
+                    return setError(conf, lines[0].index, "Invalid value");
+                lines.pop_front();
+                break;
+            }
             case METHODS:{
                 if (tokens.size() < 2)
                     return setError(conf, lines[0].index, "Invalid format");
                 for (size_t i = 1; i < tokens.size(); ++i){
-                    e_method method = toEmethod(tokens[i].value);
+                    e_method method = toEmethod(noSemicolon(tokens[i].value));
                     if (method == INVALID)
                         return setError(conf, lines[0].index, "Invalid method");
                     if (find(location.methods.begin(), location.methods.end(), method)
@@ -273,10 +292,10 @@ static int addLocation(deque<Line>& lines, ServerConfig& server, ConfigData& con
                 if (tokens.size() < 2)
                     return setError(conf, lines[0].index, "Invalid format");
                 for (size_t i = 1; i < tokens.size(); ++i){
-                    if (find(location.cgi_extensions.begin(), location.cgi_extensions.end(), tokens[i].value)
-                        != location.cgi_extensions.end())
+                    if (find(location.cgi_extensions.begin(), location.cgi_extensions.end(),
+                        noSemicolon(tokens[i].value)) != location.cgi_extensions.end())
                         return setError(conf, lines[0].index, "Multiple definitions of same extension");
-                    location.cgi_extensions.push_back(tokens[i].value);
+                    location.cgi_extensions.push_back(noSemicolon(tokens[i].value));
                 }
                 lines.pop_front();
                 break;
@@ -343,7 +362,7 @@ static int addServer(deque<Line>& lines, ConfigData& conf){
                 if (getSegment(lines, segment, conf) != 0)
                     return 1;
                 if (addLocation(segment, server, conf) != 0)
-                    return setError(conf, lines[0].index, "Syntax error");
+                    return 1;
                 break;
             }
             default:
@@ -453,18 +472,24 @@ int readTokens(const string& path, deque<Line>& lines, ConfigData& conf){
 
 int checkConfig(ConfigData& conf){
     for (size_t i = 0; i < conf.servers.size(); ++i){
-        if (conf.servers[i].host.length() == 0) 
+        ServerConfig& server = conf.servers[i];
+        if (server.host.length() == 0) 
             return setError(conf, 0, "Server host not set");
-        if (conf.servers[i].port == 0)
+        if (server.port == 0)
             return setError(conf, 0, "Server port not set");
-        if (conf.servers[i].root.length() == 0)
+        if (server.root.length() == 0)
             return setError(conf, 0, "Server root not set");
-        for (size_t j = 0; j < conf.servers[i].locations.size(); ++j){
-            if (conf.servers[i].locations[j].uri.length() == 0)
+        for (size_t j = 0; j < server.locations.size(); ++j){
+            if (server.locations[j].uri.length() == 0)
                 return setError(conf, 0, "Location URI not set");
-            if (conf.servers[i].locations[j].root.empty()
-                && conf.servers[i].locations[j].redirect.empty())
-                return setError(conf, 0, "Location root not set");
+            if (server.locations[j].root.empty()
+                && server.locations[j].redirect.empty()){
+                if (server.root.empty() == false){
+                    server.locations[j].root = server.root;
+                    continue;
+                }
+                return setError(conf, 0, "Root not set");
+            }
         }
     }
     return 0;
@@ -501,11 +526,13 @@ int checkConfig(ConfigData& conf){
             for (vector<LocationConfig>::const_iterator loc = it->locations.begin();
                 loc != it->locations.end(); ++loc){
                 cerr << "\n====LOCATION:====\n";
-                cerr << "URI:      " << loc->uri << '\n';
-                cerr << "Root:     " << loc->root << '\n';
-                cerr << "Redirect: " << loc->redirect << '\n';
-                cerr << "Uploads:  " << loc->uploads << '\n';
-                cerr << "Methods: ";
+                cerr << "URI:       " << loc->uri << '\n';
+                cerr << "Root:      " << loc->root << '\n';
+                cerr << "Index:     " << loc->index << '\n';
+                cerr << "Autoindex: " << loc->autoindex << '\n';
+                cerr << "Redirect:  " << loc->redirect << '\n';
+                cerr << "Uploads:   " << loc->uploads << '\n';
+                cerr << "Methods:   ";
                 for (size_t i = 0; i < loc->methods.size(); ++i){
                     switch (loc->methods[i]){
                         case GET:

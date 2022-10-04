@@ -1,8 +1,10 @@
 #include "Request.hpp"
 
+using namespace std;
+
 //Basically ft_split but in c++
-static std::deque<std::string> split(const std::string& str, const std::string& delim) {
-    std::deque<std::string> split;
+static deque<string> split(const string& str, const string& delim) {
+    deque<string> split;
     size_t start = 0;
     size_t end = str.find(delim);
     while (end != str.npos) {
@@ -10,8 +12,6 @@ static std::deque<std::string> split(const std::string& str, const std::string& 
         start = end + delim.length();
         end = str.find(delim, start);
     }
-    for (std::deque<std::string>::iterator it = split.begin(); it != split.end(); ++it)
-        std::cout << *it << std::endl;
     split.push_back(str.substr(start));
     return split;
 }
@@ -21,39 +21,40 @@ static std::deque<std::string> split(const std::string& str, const std::string& 
 // Each further call to parseSomething modifies &lines removing line by line
 Request::Request(int fd)
     : _fd(fd) {
-    std::deque<std::string> lines(readRequest());
+    deque<string> lines(readRequest());
     parseStart(lines);
     if (_method == INVALID)
         return;
     parseVariables(lines);
     parseMessage(lines);
 #ifdef DEBUG
-    std::cout << "Method: " << _method << std::endl;
-    std::cout << "URI: " << _URI << std::endl;
-    std::cout << "Protocol: " << _protocol << '\n' << std::endl;
-    std::cout << "Obtained variables:\n";
-    for (std::map<std::string, std::string>::const_iterator it = _variables.begin(); it != _variables.end(); ++it)
-        std::cout << it->first << ' ' << it->second << std::endl;
-    std::cout << "\nMessage:\n";
-    std::cout << _message << '\n' <<  std::endl;
+    cout << "Method: " << _method << '\n';
+    cout << "URI: " << _URI << '\n';
+    cout << "Protocol: " << _protocol << '\n';
+    cout << "Host: " << _host << '\n' << '\n';
+    cout << "Obtained variables:\n";
+    for (map<string, string>::const_iterator it = _variables.begin(); it != _variables.end(); ++it)
+        cout << it->first << ' ' << it->second << '\n';
+    cout << "\nMessage:\n";
+    cout << _message << '\n' <<  endl;
 #endif
 }
 
 // Reads request, splits to deque by CRLF
-std::deque<std::string> Request::readRequest() {
-    std::string buffer;
+deque<string> Request::readRequest() {
+    string buffer;
     buffer.resize(BUFFER_SIZE);
     int bytes_read = read(_fd, (void*)buffer.data(), BUFFER_SIZE);
     if (bytes_read == BUFFER_SIZE)
-        throw(std::runtime_error("NEED A BIGGER BUFFER OR SMTH\n"));
+        throw(runtime_error("NEED A BIGGER BUFFER OR SMTH\n"));
     buffer.resize(bytes_read);
     return split(buffer, "\r\n");
 }
 
 //Debug junk
-void Request::printRequest(std::ostream& stream) const {
+void Request::printRequest(ostream& stream) const {
     stream << "REQUEST:\n\n";
-    std::stringstream ss;
+    stringstream ss;
     switch (_method) {
         case GET:
             ss << "GET ";
@@ -68,7 +69,7 @@ void Request::printRequest(std::ostream& stream) const {
             ss << "INVALID ";
     }
     ss << _URI << ' ' << _protocol << '\n';
-    for (std::map<std::string, std::string>::const_iterator it = _variables.begin();
+    for (map<string, string>::const_iterator it = _variables.begin();
         it != _variables.end(); ++it) {
         ss << it->first << ": " << it->second << '\n';
     }
@@ -76,28 +77,29 @@ void Request::printRequest(std::ostream& stream) const {
 }
 
 // Splits first line of request to method/URI/protocol
-void Request::parseStart(std::deque<std::string>& lines) {
-    std::deque<std::string> firstline(split(lines.front(), " "));
+void Request::parseStart(deque<string>& lines) {
+    deque<string> firstline(split(lines.front(), " "));
     if (firstline.size() != 3){
         _method = INVALID;
         return;
     }
-    _method = toEmethod(firstline.at(0));
-    _URI = firstline.at(1);
-    _protocol = firstline.at(2);
+    _method = toEmethod(firstline[0]);
+    _URI = firstline[1];
+    _protocol = firstline[2];
     lines.pop_front();
 }
 
 // Saves variables line by line
-void Request::parseVariables(std::deque<std::string>& lines) {
+void Request::parseVariables(deque<string>& lines) {
     while (lines.size() != 0 && lines.front().size() != 0){
-        std::deque<std::string> current(split(lines.front(), ": "));
+        deque<string> current(split(lines.front(), ": "));
         if (current.size() != 2){
             _method = INVALID;
             return;
         }
-        _variables.insert(std::make_pair(current.at(0), current.at(1)));
-        std::cout << "\nLine: " << lines.front() << std::endl;;
+        _variables.insert(make_pair(current[0], current[1]));
+        if (current[0] == "Host")
+            _host = split(current[1], ":")[0];
         lines.pop_front();
     }
     while (lines.size() == 0 && lines.front().size() == 0)
@@ -105,10 +107,10 @@ void Request::parseVariables(std::deque<std::string>& lines) {
 }
 
 // Parses message based on Content Length if there is one and the length is specified
-void Request::parseMessage(std::deque<std::string>& lines) {
+void Request::parseMessage(deque<string>& lines) {
     if (_method == GET || _method == INVALID)
         return;
-    std::map<std::string, std::string>::const_iterator it(_variables.find("Content-Length"));
+    map<string, string>::const_iterator it(_variables.find("Content-Length"));
     if (it == _variables.end())
         return;
     size_t content_length = atoll(it->second.c_str());
@@ -119,7 +121,7 @@ void Request::parseMessage(std::deque<std::string>& lines) {
     if (lines.size() != 0 && _message.length() < content_length)
         _message.append(lines.front(), content_length - _message.length());
 #ifdef DEBUG
-    std::cout << "\n\nEXPECTED LENGTH: " << content_length << "\n\n";
-    std::cout << "\n\nFINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
+    cout << "\n\nEXPECTED LENGTH: " << content_length << "\n\n";
+    cout << "\n\nFINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
 #endif
 }
