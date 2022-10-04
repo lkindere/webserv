@@ -23,7 +23,7 @@ class Request
     public:
         int fd() const { return _fd; }
         e_method method() const { return _method; }
-        const std::string& URI() const { return _URI; }
+        const std::string& uri() const { return _uri; }
         const std::string& protocol() const { return _protocol; }
         const std::map<std::string, std::string>& variables() { return _variables; }
         const std::string& message() const { return _message; }
@@ -40,7 +40,7 @@ class Request
     private:
         int                                     _fd;
         e_method                                _method;
-        std::string                             _URI;
+        std::string                             _uri;
         std::string                             _protocol;
         std::string                             _host;
         std::map<std::string, std::string>      _variables;

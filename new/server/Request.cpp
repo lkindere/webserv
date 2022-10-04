@@ -29,7 +29,7 @@ Request::Request(int fd)
     parseMessage(lines);
 #ifdef DEBUG
     cout << "Method: " << _method << '\n';
-    cout << "URI: " << _URI << '\n';
+    cout << "URI: " << _uri << '\n';
     cout << "Protocol: " << _protocol << '\n';
     cout << "Host: " << _host << '\n' << '\n';
     cout << "Obtained variables:\n";
@@ -68,7 +68,7 @@ void Request::printRequest(ostream& stream) const {
         default:
             ss << "INVALID ";
     }
-    ss << _URI << ' ' << _protocol << '\n';
+    ss << _uri << ' ' << _protocol << '\n';
     for (map<string, string>::const_iterator it = _variables.begin();
         it != _variables.end(); ++it) {
         ss << it->first << ": " << it->second << '\n';
@@ -84,7 +84,7 @@ void Request::parseStart(deque<string>& lines) {
         return;
     }
     _method = toEmethod(firstline[0]);
-    _URI = firstline[1];
+    _uri = firstline[1];
     _protocol = firstline[2];
     lines.pop_front();
 }

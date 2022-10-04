@@ -1,5 +1,7 @@
 #include "Socket.hpp"
 
+#include <fcntl.h>
+
 #include <iostream>
 #include <cerrno>
 
@@ -39,5 +41,6 @@ int Socket::socket_accept(){
             return error();
         return -1337;
     }
+    fcntl(accepted_fd, F_SETFL, O_NONBLOCK);
     return accepted_fd;
 }

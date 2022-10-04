@@ -1,18 +1,49 @@
 #include "Webserv.hpp"
-#include "Request.hpp"
+
+#include "Response.hpp"
 
 using namespace std;
 
+//LOCATION
+
+Location::Location(const LocationConfig& conf)
+    : _config(conf){}
+
 //SERVER
 
-Server::Server(const ServerConfig& conf)
-    : _config(conf){}
+Server::Server(GlobalConfig* global, const ServerConfig& conf)
+    : _global(global), _config(conf){
+    for (size_t i = 0; i < conf.locations.size(); ++i)
+        _locations.push_back(Location(conf.locations[i]));
+}
+
+int     Server::process(){
+    for (list<Request>::iterator it = _requests.begin();
+        it != _requests.end(); ++it){
+        pollfd pfd = {0};
+        pfd.fd = it->fd();
+        pfd.events = POLLOUT;
+        int ret = poll(&pfd, 1, 0);
+        if (ret == -1)
+            return error();
+        if (ret == 0)
+            continue;
+        if (pfd.revents & POLLERR || pfd.revents & POLLHUP || pfd.revents & POLLNVAL)
+            _requests.erase(it);
+        if (pfd.revents & POLLOUT){
+            Response response;
+            response.init(*this, *it);
+            _requests.erase(it);
+        }
+    }
+    return 0;
+}
 
 void    Server::addRequest(const Request& request){
      _requests.push_back(request);
 }
 
-int     Server::checkNames(const std::string& name){
+int     Server::checkNames(const std::string& name) const{
     if (std::find(_config.server_names.begin(), _config.server_names.end(), name)
         != _config.server_names.end())
         return 1;
@@ -38,7 +69,7 @@ int Listener::accept(){
     while (ret >= 0){
         pollfd connection = {0};
         connection.fd = ret;
-        connection.events = POLLIN | POLLOUT;
+        connection.events = POLLIN;
         _connections.push_back(connection);
         ret = _socket.socket_accept();
     }
@@ -60,6 +91,8 @@ int Listener::process(){
         if (it->revents & POLLIN)
             matchServer(Request(it->fd));
     }
+    for (size_t i = 0; i < _servers.size(); ++i)
+        _servers[i].process();
     return 0;
 }
 
@@ -85,11 +118,11 @@ Webserv::Webserv(const ConfigData& conf) : _global(conf.global) {
         for (size_t i = 0; i < _listeners.size() + 1; ++i){
             if (i == _listeners.size()){
                 _listeners.push_back(Listener(srv->host, srv->port));
-                _listeners.back().addServer(Server(*srv));
+                _listeners.back().addServer(Server(&_global, *srv));
                 break;
             }
             else if (_listeners[i].host() == srv->host && _listeners[i].port() == srv->port){
-                _listeners[i].addServer(Server(*srv));
+                _listeners[i].addServer(Server(&_global, *srv));
                 break;
             }
         }
