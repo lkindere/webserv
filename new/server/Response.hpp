@@ -12,11 +12,15 @@ class Response
         int init(const Server& server, const Request& request){
             if (request.method() == INVALID)
                 return errorPage(400);
-            const Location& location = server.getLocation(request.uri());
-
+            const Location* ptr = server.getLocation(request.uri());
             //Continue this bs
 
             return 0;
+        }
+
+        int validateRequest(const Server& server, const Request& request){
+            if (request.method() == INVALID)
+                return 400;
         }
 
         int errorPage(int error) {

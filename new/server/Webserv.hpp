@@ -15,6 +15,15 @@ class Location
 
         const LocationConfig&   config() const{ return _config; }
 
+        const std::string& uri() const { return _config.uri; }
+        const std::string& root() const { return _config.root }
+        const std::string& index() const {return _config.index; }
+        bool               autoindex() const { return _config.autoindex; }
+        const std::string& redirect() const { return _config.redirect; }
+        const std::string& uploads() const { return _config.uploads; }
+        
+        //Method getter/checker
+        //Cgi extension getter/checker
     private:
         LocationConfig  _config;
 };
@@ -30,15 +39,11 @@ class Server
         int     checkNames(const std::string& name) const;
 
 
-        const Location&         getLocation(const std::string& uri) const{
-            const Location& best_match = _locations[0];
-            for (size_t i = 0; i < _locations.size(); ++i){
-                const LocationConfig& loc = _locations[i].config();
-                //Remove from str end to first / from the end
-                //If no match remove further until another /
-                //Eventually should be left with / which would return the base / location
-            }
-        }
+        const Location*                 getLocation(const std::string& uri) const;
+        const std::string&              host() const { return _config.host; }
+        int                             port() const { return _config.port; }
+        const std::string&              root() const { return _config.root; }
+        const std::vector<std::string>& names() { return _config.server_names; }
 
     private:
         GlobalConfig*           _global;

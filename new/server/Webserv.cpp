@@ -6,6 +6,31 @@
 
 using namespace std;
 
+/**
+ * @brief Splits lines by delim
+ * @param str input str
+ * @param delim delimiter
+ * @param noempty don't return empty strings
+ * @return deque<string> split lines
+ */
+static deque<string> split(const string& str, const string& delim, bool noempty = false) {
+    deque<string> split;
+    size_t start = 0;
+    size_t end = str.find(delim);
+    size_t index = 1;
+    while (end != str.npos) {
+        string segment(str.substr(start, end - start));
+        if (noempty == false || segment.empty() == false)
+            split.push_back(segment);
+        start = end + delim.length();
+        end = str.find(delim, start);
+    }
+    string segment(str.substr(start));
+    if (noempty == false || segment.empty() == false)
+        split.push_back(segment);
+    return split;
+}
+
 //LOCATION
 
 Location::Location(const LocationConfig& conf)
@@ -52,6 +77,38 @@ int     Server::checkNames(const std::string& name) const{
         != _config.server_names.end())
         return 1;
     return 0;
+}
+
+size_t getMatches(deque<string>& path, deque<string>& uri){
+    size_t matches = 0;
+    for (size_t i = 0; i < path.size() && i < uri.size(); ++i){
+        if (path[i] == uri[i])
+            ++matches;
+        else
+            break;
+    }
+    if (matches == path.size() && matches == uri.size())
+        return -1;
+    return matches;
+}
+
+const Location* Server::getLocation(const std::string& uri) const{
+    if (_locations.size() == 0)
+        return NULL;
+    deque<string>   path(split(uri, "/", true));
+    const Location* ptr = NULL;
+    size_t          current = 0;
+    for (size_t i = 0; i < _locations.size(); ++i){
+        deque<string> loc(split(_locations[i].config().uri, "/", true));
+        size_t match = getMatches(path, loc);
+        if (match == -1)
+            return &_locations[i];
+        if (match > current){
+            ptr = &_locations[i];
+            current = match;
+        }
+    }
+    return ptr;
 }
 
 
