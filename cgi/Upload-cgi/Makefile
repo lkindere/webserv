@@ -43,3 +43,6 @@ re: fclean all
 .PHONY: run
 run: all
 	./$(BIN)
+
+get_bin:
+	@echo $(CURDIR)/$(BIN)
