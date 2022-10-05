@@ -6,7 +6,7 @@ SRCDIR = ./src
 BUILDDIR = ./build
 LIBDIR = $(BUILDDIR)/lib
 OBJDIR = $(BUILDDIR)/obj
-INCDIR = $(SRCDIR)/inc/
+INCDIR = ./inc/
 EXTENSION = .cpp
 
 SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
