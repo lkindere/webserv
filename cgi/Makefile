@@ -18,6 +18,7 @@ $(SUBDIRS):
 
 # Only Copy the binary if rule all or re is called
 	@if [ -z $(MAKECMDGOALS) ] || [ $(MAKECMDGOALS) = all ] || [ $(MAKECMDGOALS) = re ]; then \
+		mkdir -p $(CGI_BIN_DIR); \
 		cp $(BIN) $(CGI_BIN_DIR)/$(notdir $(BIN)); \
 	fi; \
 

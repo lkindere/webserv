@@ -19,6 +19,7 @@ $(LIB): $(OBJECTS)
 	@mkdir -p $(dir $(LIB))
 	@printf "$(shell tput setaf 2)Compiling [$(LIB)]$(shell tput sgr0)\n"
 	@ar -r $(LIB) $(OBJECTS)
+	@mkdir -p ../server/libs/
 	@cp $(LIB) ../server/libs/$(notdir $(LIB))
 
 -include $(DEPENDS)
