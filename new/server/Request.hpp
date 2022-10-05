@@ -23,6 +23,7 @@ class Request
     public:
         int fd() const { return _fd; }
         e_method method() const { return _method; }
+
         const std::string& uri() const { return _uri; }
         const std::string& protocol() const { return _protocol; }
         const std::map<std::string, std::string>& variables() { return _variables; }

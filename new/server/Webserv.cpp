@@ -3,7 +3,6 @@
 #include <set>
 
 #include "Webserv.hpp"
-#include "Response.hpp"
 
 using namespace std;
 

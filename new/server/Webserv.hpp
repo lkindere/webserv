@@ -22,6 +22,7 @@ class Webserv
         int                     serve(int fd);
         Server*                 getServer(const Request& request);
 
+
     private:
         GlobalConfig                            _global;
         std::vector<Socket>                     _sockets;

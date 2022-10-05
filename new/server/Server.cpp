@@ -57,17 +57,24 @@ static size_t getMatches(deque<string>& path, deque<string>& uri){
     return matches;
 }
 
+int validMethod(const vector<e_method>& allowed, e_method method){
+    if (allowed.size() != 0
+        && find(allowed.begin(), allowed.end(), method) == allowed.end())
+        return 0;
+    return 1;
+}
+
 ssize_t sendResponse(int fd, const std::string& status, const std::string& type, const std::string& message){
 #ifdef DEBUG
-            std::cout << "Sending response:\n";
-            std::cout << "HTTP/1.1" << ' ' << status << '\n' << "Content-Type: " << type << '\n'
-                    << "Content-Length: " << message.size() << "\n\n" << message << std::endl;
+    std::cout << "Sending response:\n";
+    std::cout << "HTTP/1.1" << ' ' << status << '\n' << "Content-Type: " << type << '\n'
+            << "Content-Length: " << message.size() << "\n\n" << message << std::endl;
 #endif
-            std::stringstream ss;
-            ss << "HTTP/1.1" << ' ' << status << '\n' << "Content-Type: " << type << '\n'
-                    << "Content-Length: " << message.size() << "\n\n" << message;
-            std::string response(ss.str());
-            return write(fd, response.c_str(), response.length());
+    std::stringstream ss;
+    ss << "HTTP/1.1" << ' ' << status << '\n' << "Content-Type: " << type << '\n'
+            << "Content-Length: " << message.size() << "\n\n" << message;
+    std::string response(ss.str());
+    return write(fd, response.c_str(), response.length());
 }
 
 //LOCATION
@@ -95,6 +102,9 @@ int     Server::serve(const Request& request) const{
     if (location == NULL)
         return serveRoot(request);
     return serveLocation(request, *location);
+
+    //ADD REDIRECTION
+
 }
 
 int     isDirectory(const string& path){
@@ -121,14 +131,29 @@ int     Server::serveRoot(const Request& request) const{
     return 0;
 }
 
+string generateLocationURI(const std::string& root, const std::string& location, const std::string& request){
+    size_t i = 0;
+    while (i < location.size() && location[i] == request[i])
+        ++i;
+    string req(request.substr(i));
+    if (req.size() == 0)
+        req += "/";
+    string URI("." + root + req);
+    cout << "GENERATED URI: " << URI << std::endl;
+    return URI;
+}
+
 int     Server::serveLocation(const Request& request, const Location& location) const{
     cout << "Serving location\n";
-    string path("." + location.root() + request.uri());
+    string path(generateLocationURI(location.root(), location.uri(), request.uri()));
 #ifdef DEBUG
     cout << "Checking path: " << path << std::endl;
     cout << "Access: " << access(path.data(), R_OK) << std::endl;
     cout << "Is directory: " << isDirectory(path) << std::endl;
 #endif
+    std::cout << "VALID METHOD: " << validMethod(location.methods(), request.method()) << endl;
+    if (validMethod(location.methods(), request.method()) == 0)
+        return serveError(request, 405);
     if (request.method() == GET){
         if (access(path.data(), R_OK) != 0)
             return serveError(request, 404);
@@ -141,26 +166,64 @@ int     Server::serveLocation(const Request& request, const Location& location) 
 
 int     Server::serveDirectory(const Request& request, const Location& location) const{
     cout << "Serving directory\n";
-    string path("." + location.root() + request.uri());
+    string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (path[path.length() - 1] != '/')
         path += "/";
+    if (request.method() != GET)
+        return serveError(request, 405);
     if (location.index().length() != 0){
         path += location.index();
         cout << "Indexed path: " << path << std::endl;
-        if (access(path.data(), R_OK != 0)){
+        if (access(path.data(), R_OK) != 0){
             cout << "No access\n";
             return serveError(request, 404);
         }
-        get(request, path);
+        return get(request, path);
     }
-    else if (location.autoindex() == true)
-        return 0; //Autoindex directory
+    // else if (location.autoindex() == true)
+    //     ; //Return autoindex cgi html?
     return serveError(request, 403);
 }
 
-int     Server::serveError(const Request& request, int error) const{
-    sendResponse(request.fd(), "404 NOT OKAY", "text/html", "Oops");
+
+int     Server::serveError(const Request& request, short error) const{
+    string status(errorStatus(error));
+    if (errorRoot().size() == 0)
+        serveDefaultError(request, status);
+    map<short, string>::const_iterator it(errorPages().find(error));
+    if (it == errorPages().end())
+        serveDefaultError(request, status);
+    string path("." + errorRoot() + it->second);
+    if (isDirectory(path) || access(path.data(), R_OK) != 0)
+        serveDefaultError(request, status);
+    ifstream file(path);
+    if (file.is_open() == false)
+        serveDefaultError(request, status);
+    stringstream ss;
+    ss << file.rdbuf();
+    string str(ss.str());
+    sendResponse(request.fd(), status, "text/html", str);
     return 0;
+}
+
+string  Server::errorStatus(short error) const{
+    map<short, string>   status;
+    status.insert(make_pair(301, "301 Moved Permanently"));
+    status.insert(make_pair(400, "400 Bad Request"));
+    status.insert(make_pair(403, "403 Forbidden"));
+    status.insert(make_pair(404, "404 Not Found"));
+    status.insert(make_pair(405, "405 Method Not Allowed"));
+    status.insert(make_pair(411, "411 Length Required"));
+    status.insert(make_pair(413, "413 Payload Too Large"));
+    //Add more later if needed if missing will return empty str
+    return status[error];
+}
+
+int     Server::serveDefaultError(const Request& request, const string& status) const{
+    string msg("<!DOCTYPE html><html><head><title>");
+    msg += status + "</title></head><body><h1>";
+    msg += status + "</h1></body></html>";
+    sendResponse(request.fd(), status, "text/html", msg);
 }
 
 int     Server::get(const Request& request, const std::string& path) const{
