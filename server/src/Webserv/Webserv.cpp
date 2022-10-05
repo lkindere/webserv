@@ -1,5 +1,6 @@
 #include "Webserv.hpp"
 
+#include <cstring>  //memset cuz linux doesn't like the same initializers
 #include <algorithm>//std::find linux
 #include <set>
 #include <sstream>
@@ -9,7 +10,8 @@ using namespace std;
 //HELPERS
 
 std::pair< std::string, short > getHost(int sock_fd) {
-    sockaddr_in addr = {0, 0, 0, {0}, {0}};
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
     socklen_t alen = sizeof(addr);
     getsockname(sock_fd, ( sockaddr * ) &addr, &alen);
     uint32_t ip = ntohl(addr.sin_addr.s_addr);

@@ -8,6 +8,7 @@
 #include <deque>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -198,7 +199,7 @@ int Server::serveError(const Request &request, short error) const {
     string path("." + errorRoot() + it->second);
     if (isDirectory(path) || access(path.data(), R_OK) != 0)
         serveDefaultError(request, status);
-    ifstream file(path);
+    ifstream file(path.data());
     if (file.is_open() == false)
         serveDefaultError(request, status);
     stringstream ss;
@@ -230,7 +231,7 @@ int Server::serveDefaultError(const Request &request, const string &status) cons
 }
 
 int Server::get(const Request &request, const std::string &path) const {
-    ifstream file(path);
+    ifstream file(path.data());
     if (file.is_open() == false) {
         cout << "Failed to open\n";
         return serveError(request, 404);
