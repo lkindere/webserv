@@ -10,31 +10,40 @@ EXTENSION = .cpp
 
 SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
 OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
-DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)%.d,$(SOURCES))
+DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 
-all: $(BIN)
-	
+.NOTPARALLEL:
+
+all: print_current_bin $(BIN)
+
+
+print_current_bin:
+	@printf "$(shell tput setaf 4)$(BIN):$(shell tput sgr0)\n"
 
 $(BIN): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
+	@$(CXX) $(CXXFLAGS) $^ -o $@
 
 -include $(DEPENDS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
+	@printf "$(shell tput setaf 2)Compiling [$<]$(shell tput sgr0)\n"
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 	@mv $(@:.o=.d) $(BUILDDIR)
 
 # Cleaning Rules #
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJECTS) $(DEPENDS)
-	$(RM) -r $(BUILDDIR)
+	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(BUILDDIR)$(shell tput sgr0)\n"
+	@$(RM) $(OBJECTS) $(DEPENDS)
+	@$(RM) -r $(BUILDDIR)
 
 .PHONY: fclean
 fclean: clean
-	$(RM) $(BIN)
+	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
+	@$(RM) $(BIN)
 
 .PHONY: re
 re: fclean all	

@@ -15,7 +15,7 @@ EXTENSION = .cpp
 
 SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
 OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
-DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)%.d,$(SOURCES))
+DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
@@ -23,35 +23,41 @@ all: compile_cgis $(CONFIG_PARSER_LIB) $(BIN)
 	
 
 compile_cgis:
-	$(MAKE) -C $(CGI_SRCS_DIR)
+	@printf "$(shell tput setaf 2)Compiling CGI's$(shell tput sgr0)\n"
+	@$(MAKE) -C $(CGI_SRCS_DIR)
 
 $(CONFIG_PARSER_LIB):
-	$(MAKE) -C $(dir $@)
+	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
 
 $(BIN): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	@printf "$(shell tput setaf 2)Compiling [$^]$(shell tput sgr0)\n"
+	@$(CXX) $(CXXFLAGS) $^ -o $@
 
 -include $(DEPENDS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
+	@printf "$(shell tput setaf 2)Compiling [$<]$(shell tput sgr0)\n"
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 	@mv $(@:.o=.d) $(BUILDDIR)
 
 # Cleaning Rules #
 
 .PHONY: clean
 clean:
-	$(MAKE) -C $(CGI_SRCS_DIR) clean
-	$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
-	$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
-	$(RM) -r $(BUILDDIR)
+	@$(MAKE) -C $(CGI_SRCS_DIR) clean
+	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
+	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
+	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
+	@$(RM) -r $(BUILDDIR)
 
 .PHONY: fclean
 fclean: clean
-	$(MAKE) -C $(CGI_SRCS_DIR) fclean
-	$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
-	$(RM) $(BIN)
+	@$(MAKE) -C $(CGI_SRCS_DIR) fclean
+	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
+	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
+	@$(RM) $(BIN)
 
 .PHONY: re
 re: fclean all	
