@@ -1,10 +1,12 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR)
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC)
+LDFLAGS = -L./libs -lconfigparser
 
 CGI_SRCS_DIR = ../cgi
 
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
+CONFIG_PARSER_INC = $(CONFIG_PARSER_DIR)/inc/
 
 BIN = webserv
 SRCDIR = ./src
@@ -13,7 +15,7 @@ OBJDIR = $(BUILDDIR)/obj
 INCDIR = ./inc/
 EXTENSION = .cpp
 
-SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
+SOURCES := $(shell find $(SRCDIR) -type f -name '*$(EXTENSION)')
 OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
 DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
@@ -31,8 +33,8 @@ $(CONFIG_PARSER_LIB):
 	@$(MAKE) -C $(dir $@)
 
 $(BIN): $(OBJECTS)
-	@printf "$(shell tput setaf 2)Compiling [$^]$(shell tput sgr0)\n"
-	@$(CXX) $(CXXFLAGS) $^ -o $@
+	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 -include $(DEPENDS)
 
@@ -65,7 +67,7 @@ re: fclean all
 
 .PHONY: run
 run: all
-	./$(BIN)
+	./$(BIN) ../configs/basic.conf
 
 
 get_cgi_bin_dir:
