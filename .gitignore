@@ -13,6 +13,9 @@
 # Ignore .vscode
 .vscode
 
+# Ignore .cgi binarys
+*.cgi
+
 # Prerequisites
 *.d
 
