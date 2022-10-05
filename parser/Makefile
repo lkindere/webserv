@@ -1,10 +1,9 @@
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR)
 
-LIB = $(LIBDIR)/libconfigparser.a
+LIB = libconfigparser.a
 SRCDIR = ./src
 BUILDDIR = ./build
-LIBDIR = $(BUILDDIR)/lib
 OBJDIR = $(BUILDDIR)/obj
 INCDIR = ./inc/
 EXTENSION = .cpp
