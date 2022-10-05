@@ -26,11 +26,11 @@ all: compile_cgis $(CONFIG_PARSER_LIB) $(BIN)
 
 compile_cgis:
 	@printf "$(shell tput setaf 2)Compiling CGI's$(shell tput sgr0)\n"
-	@$(MAKE) -C $(CGI_SRCS_DIR)
+	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
 
 $(CONFIG_PARSER_LIB):
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
-	@$(MAKE) -C $(dir $@)
+	@$(MAKE) --no-print-directory -C $(dir $@)
 
 $(BIN): $(OBJECTS)
 	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
