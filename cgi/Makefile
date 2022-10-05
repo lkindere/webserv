@@ -1,5 +1,5 @@
 # Targets that can be executed by this Makefile
-TOPTARGETS := all fclean re
+TOPTARGETS := all clean fclean re
 
 # Gets all Subdirectorys of cgi
 SUBDIRS = $(wildcard */.)
