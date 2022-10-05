@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <cstdlib>
 
 #include <fstream>
 #include <iostream>
@@ -76,7 +77,7 @@ void getBoundary(Upload &ul) {
 }
 
 int fileExists(const std::string &path) {
-    std::ifstream file(path);
+    std::ifstream file(path.c_str());
     if (file.is_open()) return true;
     return false;
 }
@@ -92,7 +93,7 @@ int checkBoundary(Upload &ul) {
 void uploadFile(Upload &ul) {
     while (fileExists(ul.path + ul.filename))
         ul.filename = randomNumberThingy() + ul.filename;
-    std::ofstream file(ul.path + ul.filename);
+    std::ofstream file((ul.path + ul.filename).c_str());
     if (file.is_open() == false) uploadFailed();
     ssize_t bytes_read = ul.buffer.length();
     ul.buffer.resize(BUFFER_SIZE);
