@@ -1,4 +1,4 @@
-NAME :=	./out
+NAME :=	../out
 
 CXX = c++
 CXXFLAGS := -std=c++98 -DDEBUG
@@ -6,6 +6,7 @@ CXXFLAGS := -std=c++98 -DDEBUG
 SRCS :=		main.cpp		\
 			Socket.cpp 		\
 			Request.cpp		\
+			Server.cpp		\
 			Webserv.cpp		\
 
 OBJ_DIR := ./_obj

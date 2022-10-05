@@ -481,8 +481,6 @@ int checkConfig(ConfigData& conf){
             return setError(conf, 0, "Server port not set");
         if (server.root.length() == 0)
             return setError(conf, 0, "Server root not set");
-        if (server.locations.size() == 0)
-            return setError(conf, 0, "At least one location per server required");
         for (size_t j = 0; j < server.locations.size(); ++j){
             if (server.locations[j].uri.length() == 0)
                 return setError(conf, 0, "Location URI not set");

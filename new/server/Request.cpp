@@ -23,6 +23,8 @@ static deque<string> split(const string& str, const string& delim) {
 // Each further call to parseSomething modifies &lines removing line by line
 Request::Request(int fd)
     : _fd(fd) {
+    if (fd == -1)
+        return;
     deque<string> lines(readRequest());
     parseStart(lines);
     if (_method == INVALID)

@@ -38,6 +38,10 @@ int Socket::init() {
     return 0;
 }
 
+/**
+ * @brief accepts a connection if there is one, sets fd to nonblock
+ * @return -1337 if would block but no error, -1 on error, fd on success 
+ */
 int Socket::socket_accept(){
     int accepted_fd = accept(_fd, (sockaddr*)&_address, &_len);
     if (accepted_fd == -1){
