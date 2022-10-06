@@ -18,4 +18,8 @@ fclean:
 
 re: fclean all
 
-.PHONY: clean, fclean, re
+debug:
+	@$(MAKE) -C $(SERVER_DIR) debug
+	@cp $(SERVER_DIR)/$(NAME)_debug $(NAME)_debug
+
+.PHONY: clean, fclean, re, debug

@@ -68,6 +68,9 @@ re: fclean all
 run: all
 	./$(BIN) ../configs/basic.conf
 
+.PHONY: debug
+debug:
+	$(CXX) -g -DDEBUG $(CXXFLAGS) $(SOURCES) $(LDFLAGS) -o $(BIN)_debug
 
 get_cgi_bin_dir:
 	@echo $(CURDIR)/cgi-bin
