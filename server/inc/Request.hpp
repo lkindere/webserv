@@ -1,13 +1,8 @@
 #pragma once
 
-#include <unistd.h>
-
+#include <set>
 #include <deque>
-#include <iostream>
-#include <map>
-#include <sstream>
 #include <string>
-#include <vector>
 
 #include "Config.hpp"
 
@@ -17,13 +12,14 @@ enum e_method;
 
 struct ContentInfo
 {
-    ssize_t length;
-    std::vector< std::string> type;
+    size_t length;
+    std::string boundary;
+    std::set< std::string> types;
 };
 
 class Request {
 public:
-    Request(int fd);
+    Request(int fd, size_t size_max);
 
 public:
     int fd() const { return _fd; }
@@ -34,19 +30,25 @@ public:
     const std::deque< std::string> &headers() { return _headers; }
     const std::string &message() const { return _message; }
     const std::string &host() const { return _host; }
-    const std::vector< std::string > &type() const { return _content.type; }
-    ssize_t length() { return _content.length; }
+    const std::set< std::string > &types() const { return _content.types; }
+    const std::string& boundary() const { return _content.boundary; }
+    size_t length() const { return _content.length; }
+    int error() const { return _error; }
 
     void printRequest(std::ostream &stream) const;
 
 private:
+    void init();
     std::deque< std::string > readRequest();
     void parseStart(std::deque< std::string > &lines);
     void parseHeaders(std::deque< std::string > &lines);
     void parseMessage(std::deque< std::string > &lines);
+    void setError(int error);
 
 private:
     int _fd;
+    int _error;
+    size_t _size_max;
     e_method _method;
     std::string _uri;
     std::string _protocol;

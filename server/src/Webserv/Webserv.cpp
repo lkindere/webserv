@@ -5,6 +5,8 @@
 #include <set>
 #include <sstream>
 
+#include <iostream>
+
 using namespace std;
 
 //HELPERS
@@ -94,7 +96,7 @@ int Webserv::process() {
         if (it->revents & POLLERR || it->revents & POLLHUP || it->revents & POLLNVAL)
             it->fd = -1;
         if (it->revents & POLLIN)
-            _requests[it->fd].push_back(Request(it->fd));
+            _requests[it->fd].push_back(Request(it->fd, _global.client_max_body_size));
         if (it->revents & POLLOUT) {
             if (serve(it->fd) != 0)
                 return -1;

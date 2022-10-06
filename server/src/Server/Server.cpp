@@ -7,14 +7,45 @@
 #include <cstdio> // remove()
 
 #include <deque>
+#include <iostream>
 #include <fstream>
 #include <sstream>
-// #include <algorithm>
+#include <algorithm>
 
 #include "uString.hpp"
 #include "uMethod.hpp"
 
 using namespace std;
+
+//HELPERS
+
+/**
+ * @brief Checks if path is a directory
+ * @param path 
+ * @return int 1 on directory 0 if not
+ */
+int isDirectory(const string &path) {
+    struct stat sb;
+    stat(path.data(), &sb);
+    return (S_ISDIR(sb.st_mode));
+}
+
+/**
+ * @brief Generates new URI on matching location
+ * @param root location root
+ * @param location location uri
+ * @param request request uri
+ * @return string uri
+ */
+string generateLocationURI(const std::string &root, const std::string &location, const std::string &request) {
+    size_t i = 0;
+    while (i < location.size() && location[i] == request[i])
+        ++i;
+    string req(request.substr(i));
+    if (req.size() == 0)
+        req += "/";
+    return string("." + root + req);
+}
 
 /**
  * @brief Sends a respones to fd
@@ -66,7 +97,7 @@ int Server::serve(const Request &request) const {
     cout << "Request: " << request.host() << ' ' << request.uri() << '\n';
 #endif
     if (request.method() == INVALID)
-        return serveError(request, 400);
+        return serveError(request, request.error());
     const Location *location(getLocation(request.uri()));
     cout << "Location found: " << (location != NULL) << '\n';
     if (location == NULL)
@@ -74,17 +105,6 @@ int Server::serve(const Request &request) const {
     return serveLocation(request, *location);
 
     //ADD REDIRECTION
-}
-
-/**
- * @brief Checks if path is a directory
- * @param path 
- * @return int 1 on directory 0 if not
- */
-int isDirectory(const string &path) {
-    struct stat sb;
-    stat(path.data(), &sb);
-    return (S_ISDIR(sb.st_mode));
 }
 
 /**
@@ -100,40 +120,15 @@ int Server::serveRoot(const Request &request) const {
     cout << "Access: " << access(path.data(), R_OK) << std::endl;
     cout << "Is directory: " << isDirectory(path) << std::endl;
 #endif
-    if (access(path.data(), R_OK) != 0)
-        return serveError(request, 404);
-    if (request.method() == GET) {
-        if (isDirectory(path))
-            return serveError(request, 403);
-        mget(request, path);
-    }
-    if (request.method() == DELETE){
-        if (access(path.data(), W_OK) != 0)
-            return serveError(request, 403);
-        if (isDirectory(path))
-            return serveError(request, 403);
-        mdelete(request, path);
+    if (request.method() == GET)
+        return mget(request, path);
+    if (request.method() == DELETE)
+        return mdelete(request, path);
+    if (request.method() == POST){
+        ; //?? probably more checks later
+        return mpost(request, path);
     }
     return 0;
-}
-
-/**
- * @brief Generates new URI on matching location
- * @param root location root
- * @param location location uri
- * @param request request uri
- * @return string uri
- */
-string generateLocationURI(const std::string &root, const std::string &location, const std::string &request) {
-    size_t i = 0;
-    while (i < location.size() && location[i] == request[i])
-        ++i;
-    string req(request.substr(i));
-    if (req.size() == 0)
-        req += "/";
-    string URI("." + root + req);
-    cout << "GENERATED URI: " << URI << std::endl;
-    return URI;
 }
 
 /**
@@ -143,29 +138,16 @@ string generateLocationURI(const std::string &root, const std::string &location,
  * @return int 0 on success
  */
 int Server::serveLocation(const Request &request, const Location &location) const {
-    cout << "Serving location\n";
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
-#ifdef DEBUG
-    cout << "Checking path: " << path << std::endl;
-    cout << "Access: " << access(path.data(), R_OK) << std::endl;
-    cout << "Is directory: " << isDirectory(path) << std::endl;
-#endif
-    std::cout << "VALID METHOD: " << validMethod(location.methods(), request.method()) << endl;
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
-    if (access(path.data(), R_OK) != 0)
-        return serveError(request, 404);
-    if (request.method() == GET) {
-        if (isDirectory(path))
-            return serveDirectory(request, location);
-        mget(request, path);
-    }
-    if (request.method() == DELETE){
-        if (access(path.data(), W_OK) != 0)
-            return serveError(request, 403);
-        if (isDirectory(path))
-            return serveError(request, 403);
-        mdelete(request, path);
+    if (request.method() == GET)
+        return mget(request, path);
+    if (request.method() == DELETE)
+        return mdelete(request, path);
+    if (request.method() == POST){
+        ; //?? probably more checks later
+        mpost(request, path);
     }
     return 0;
 }
@@ -177,7 +159,6 @@ int Server::serveLocation(const Request &request, const Location &location) cons
  * @return int 0 on success
  */
 int Server::serveDirectory(const Request &request, const Location &location) const {
-    cout << "Serving directory\n";
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (path[path.length() - 1] != '/')
         path += "/";
@@ -185,11 +166,6 @@ int Server::serveDirectory(const Request &request, const Location &location) con
         return serveError(request, 405);
     if (location.index().length() != 0) {
         path += location.index();
-        cout << "Indexed path: " << path << std::endl;
-        if (access(path.data(), R_OK) != 0) {
-            cout << "No access\n";
-            return serveError(request, 404);
-        }
         return mget(request, path);
     }
     // else if (location.autoindex() == true)
@@ -237,6 +213,7 @@ string Server::errorStatus(short error) const {
     status.insert(make_pair(405, "405 Method Not Allowed"));
     status.insert(make_pair(411, "411 Length Required"));
     status.insert(make_pair(413, "413 Payload Too Large"));
+    status.insert(make_pair(500, "500 Internal Server Error"));
     //Add more later if needed if missing will return empty str
     return status[error];
 }
@@ -262,11 +239,15 @@ int Server::serveDefaultError(const Request &request, const string &status) cons
  * @return int 0 on success
  */
 int Server::mget(const Request &request, const string& path) const {
-    ifstream file(path.data());
-    if (file.is_open() == false) {
-        cout << "Failed to open\n";
+    if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
-    }
+    if (access(path.data(), R_OK) != 0)
+        return serveError(request, 403);
+    if (isDirectory(path))
+        return serveError(request, 403);
+    ifstream file(path.data());
+    if (file.is_open() == false)
+        return serveError(request, 500);
     stringstream ss;
     ss << file.rdbuf();
     string str(ss.str());
@@ -274,21 +255,51 @@ int Server::mget(const Request &request, const string& path) const {
     return 0;
 }
 
+int Server::multipartUploader(const Request& request, const string& path) const {
+    if (request.length() == 0)
+        ;
+    if (path.length() == 0)
+        ;
+    return 0;
+}
+
 int Server::mpost(const Request& request, const string& path) const {
-    ; //application/x-www-form-urlencoded
+    const set<string>& types = request.types();
+    for (set<string>::const_iterator it = types.begin();
+        it != types.end(); ++it)
+        cout << "TYPE: " << *it << '\n';
+    cout << "BOUNDARY: " << request.boundary() << '\n';
+    cout << "SIZE: " << request.length() << std::endl;
 
-    ; //multipart/form-data
+    if (types.find("application/x-www-form-urlencoded") != types.end())
+        return 0; //Not inplemented
+    else if (types.find("multipart/form-data") != types.end())
+        return multipartUploader(request, path);
+        
+    return 0; //Not implemented - text/plain
 
-    ; //text/plain
+
+
+
     if (request.fd())
         ;
     if (path.empty())
         ;
-
-    return 0;
 }
 
+/**
+ * @brief Deletes a file, sends a response
+ * @param request 
+ * @param path 
+ * @return int always 0
+ */
 int Server::mdelete(const Request& request, const string& path) const {
+    if (access(path.data(), F_OK) != 0)
+        return serveError(request, 404);
+    if (access(path.data(), W_OK) != 0)
+        return serveError(request, 403);
+    if (isDirectory(path))
+        return serveError(request, 403);
     if (remove(path.data()) != 0){
         sendResponse(request.fd(), "204 No Content", "text/plain", "No content");
         return 0;
