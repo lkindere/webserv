@@ -23,6 +23,10 @@ Socket::Socket(const std::string &host, int port)
     memset(_address.sin_zero, 0, sizeof(_address.sin_zero));
 }
 
+/**
+ * @brief Initializes a socket and starts listening
+ * @return int 0 on success 1 + writes to cerr on error
+ */
 int Socket::init() {
     if (_address.sin_addr.s_addr == INADDR_NONE)//Same as 255.255.255.255 don't allow this IP before config?
         return error();

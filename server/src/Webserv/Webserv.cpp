@@ -9,6 +9,11 @@ using namespace std;
 
 //HELPERS
 
+/**
+ * @brief Returns a IP:port pair from socket fd
+ * @param sock_fd 
+ * @return std::pair< std::string, short > 
+ */
 std::pair< std::string, short > getHost(int sock_fd) {
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -25,6 +30,10 @@ std::pair< std::string, short > getHost(int sock_fd) {
 
 //WEBSERV
 
+/**
+ * @brief Contructs Webserv and all needed sockets + servers
+ * @param conf 
+ */
 Webserv::Webserv(const ConfigData &conf) : _global(conf.global) {
     set< pair< string, int > > socks;
     for (vector< ServerConfig >::const_iterator srv = conf.servers.begin();
@@ -37,6 +46,10 @@ Webserv::Webserv(const ConfigData &conf) : _global(conf.global) {
     }
 }
 
+/**
+ * @brief Initializes all sockets
+ * @return int 0 on success 1 on error
+ */
 int Webserv::init() {
     for (size_t i = 0; i < _sockets.size(); ++i) {
         int ret = _sockets[i].init();
@@ -46,6 +59,10 @@ int Webserv::init() {
     return 0;
 }
 
+/**
+ * @brief Accepts all pending connection requests on all sockets
+ * @return int 0 on success 1 on error
+ */
 int Webserv::accept() {
     for (size_t i = 0; i < _sockets.size(); ++i) {
         int ret = _sockets[i].socket_accept();
@@ -62,6 +79,10 @@ int Webserv::accept() {
     return 0;
 }
 
+/**
+ * @brief Loops through all connections, pushes reads to requests, serves writable
+ * @return int 0 on success 1 on error
+ */
 int Webserv::process() {
     int ret = poll(_connections.data(), _connections.size(), 0);
     if (ret < 0)
@@ -83,6 +104,11 @@ int Webserv::process() {
     return 0;
 }
 
+/**
+ * @brief Serves a writeable fd if there are pending requests
+ * @param fd 
+ * @return int 0 on success -1 on error
+ */
 int Webserv::serve(int fd) {
     map< int, deque< Request > >::iterator it(_requests.find(fd));
     if (it == _requests.end() || it->second.size() == 0)
@@ -97,6 +123,11 @@ int Webserv::serve(int fd) {
     return 0;
 }
 
+/**
+ * @brief Finds the appropriate server for a request
+ * @param request 
+ * @return Server* server or NULL if not found
+ */
 Server *Webserv::getServer(const Request &request) {
     Server *first = NULL;
     pair< string, short > host(getHost(request.fd()));

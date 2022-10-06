@@ -57,6 +57,12 @@ static size_t getMatches(deque< string > &path, deque< string > &uri) {
     return matches;
 }
 
+/**
+ * @brief Check if method is valid
+ * @param allowed: vector of allowed methods, if empty all are allowed
+ * @param method: method to test
+ * @return int 1 on valid 0 on invalid
+ */
 int validMethod(const vector< e_method > &allowed, e_method method) {
     if (allowed.size() != 0
         && find(allowed.begin(), allowed.end(), method) == allowed.end())
@@ -64,6 +70,14 @@ int validMethod(const vector< e_method > &allowed, e_method method) {
     return 1;
 }
 
+/**
+ * @brief Sends a respones to fd
+ * @param fd 
+ * @param status 
+ * @param type 
+ * @param message 
+ * @return ssize_t bytes written 
+ */
 ssize_t sendResponse(int fd, const std::string &status, const std::string &type, const std::string &message) {
 #ifdef DEBUG
     std::cout << "Sending response:\n";
@@ -95,6 +109,11 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
         _locations.push_back(Location(conf.locations[i]));
 }
 
+/**
+ * @brief Sends a response based on request
+ * @param request 
+ * @return int 0 on success
+ */
 int Server::serve(const Request &request) const {
 #ifdef DEBUG
     cout << "Server   " << host() << ':' << port() << " received request\n";
@@ -111,12 +130,22 @@ int Server::serve(const Request &request) const {
     //ADD REDIRECTION
 }
 
+/**
+ * @brief Checks if path is a directory
+ * @param path 
+ * @return int 1 on directory 0 if not
+ */
 int isDirectory(const string &path) {
     struct stat sb;
     stat(path.data(), &sb);
     return (S_ISDIR(sb.st_mode));
 }
 
+/**
+ * @brief Serves from root path of server
+ * @param request 
+ * @return int 0 on success
+ */
 int Server::serveRoot(const Request &request) const {
     cout << "Serving root\n";
     string path("." + root() + request.uri());
@@ -135,6 +164,13 @@ int Server::serveRoot(const Request &request) const {
     return 0;
 }
 
+/**
+ * @brief Generates new URI on matching location
+ * @param root location root
+ * @param location location uri
+ * @param request request uri
+ * @return string uri
+ */
 string generateLocationURI(const std::string &root, const std::string &location, const std::string &request) {
     size_t i = 0;
     while (i < location.size() && location[i] == request[i])
@@ -147,6 +183,12 @@ string generateLocationURI(const std::string &root, const std::string &location,
     return URI;
 }
 
+/**
+ * @brief Serves from server location
+ * @param request 
+ * @param location 
+ * @return int 0 on success
+ */
 int Server::serveLocation(const Request &request, const Location &location) const {
     cout << "Serving location\n";
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
@@ -168,6 +210,12 @@ int Server::serveLocation(const Request &request, const Location &location) cons
     return 0;
 }
 
+/**
+ * @brief Serves a directory if index is set or autoindex is on
+ * @param request 
+ * @param location 
+ * @return int 0 on success
+ */
 int Server::serveDirectory(const Request &request, const Location &location) const {
     cout << "Serving directory\n";
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
@@ -189,6 +237,12 @@ int Server::serveDirectory(const Request &request, const Location &location) con
     return serveError(request, 403);
 }
 
+/**
+ * @brief Serves an error page
+ * @param request 
+ * @param error errorcode
+ * @return int 0 on success
+ */
 int Server::serveError(const Request &request, short error) const {
     string status(errorStatus(error));
     if (errorRoot().size() == 0)
@@ -209,6 +263,11 @@ int Server::serveError(const Request &request, short error) const {
     return 0;
 }
 
+/**
+ * @brief Returns status string based on error code
+ * @param error 
+ * @return string 
+ */
 string Server::errorStatus(short error) const {
     map< short, string > status;
     status.insert(make_pair(301, "301 Moved Permanently"));
@@ -222,6 +281,12 @@ string Server::errorStatus(short error) const {
     return status[error];
 }
 
+/**
+ * @brief Sends a default errorpage based on error code
+ * @param request 
+ * @param status 
+ * @return int 0 on success
+ */
 int Server::serveDefaultError(const Request &request, const string &status) const {
     string msg("<!DOCTYPE html><html><head><title>");
     msg += status + "</title></head><body><h1>";
@@ -230,6 +295,12 @@ int Server::serveDefaultError(const Request &request, const string &status) cons
 	return 0;
 }
 
+/**
+ * @brief Serves get request
+ * @param request 
+ * @param path 
+ * @return int 0 on success
+ */
 int Server::get(const Request &request, const std::string &path) const {
     ifstream file(path.data());
     if (file.is_open() == false) {
@@ -243,6 +314,11 @@ int Server::get(const Request &request, const std::string &path) const {
     return 0;
 }
 
+/**
+ * @brief Checks if server_name matches with host
+ * @param name 
+ * @return int 1 on match 0 if no match
+ */
 int Server::checkNames(const std::string &name) const {
     if (find(_config.server_names.begin(), _config.server_names.end(), name)
         != _config.server_names.end())
@@ -250,6 +326,11 @@ int Server::checkNames(const std::string &name) const {
     return 0;
 }
 
+/**
+ * @brief Picks a matching location from server
+ * @param uri 
+ * @return const Location* if found, NULL if not
+ */
 const Location *Server::getLocation(const std::string &uri) const {
     if (_locations.size() == 0)
         return NULL;
