@@ -18,7 +18,6 @@ public:
     const std::string &uploads() const { return _config.uploads; }
     const std::vector< e_method > &methods() const { return _config.methods; }
 
-    //Method getter/checker
     //Cgi extension getter/checker
 private:
     LocationConfig _config;
@@ -36,7 +35,10 @@ private:
     int serveDirectory(const Request &request, const Location &location) const;
     int serveError(const Request &request, short error) const;
     int serveDefaultError(const Request &request, const std::string &status) const;
-    int get(const Request &request, const std::string &path) const;
+    
+    int mget(const Request &request, const std::string &path) const;
+    int mpost(const Request &request, const std::string &path) const;
+    int mdelete(const Request &request, const std::string &path) const;
 
     std::string errorStatus(short error) const;
 

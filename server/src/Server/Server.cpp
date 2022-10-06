@@ -4,11 +4,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cstdio> // remove()
 
 #include <deque>
 #include <fstream>
 #include <sstream>
-#include <algorithm>
+// #include <algorithm>
 
 using namespace std;
 
@@ -154,12 +155,19 @@ int Server::serveRoot(const Request &request) const {
     cout << "Access: " << access(path.data(), R_OK) << std::endl;
     cout << "Is directory: " << isDirectory(path) << std::endl;
 #endif
+    if (access(path.data(), R_OK) != 0)
+        return serveError(request, 404);
     if (request.method() == GET) {
-        if (access(path.data(), R_OK) != 0)
-            return serveError(request, 404);
         if (isDirectory(path))
             return serveError(request, 403);
-        get(request, path);
+        mget(request, path);
+    }
+    if (request.method() == DELETE){
+        if (access(path.data(), W_OK) != 0)
+            return serveError(request, 403);
+        if (isDirectory(path))
+            return serveError(request, 403);
+        mdelete(request, path);
     }
     return 0;
 }
@@ -200,12 +208,19 @@ int Server::serveLocation(const Request &request, const Location &location) cons
     std::cout << "VALID METHOD: " << validMethod(location.methods(), request.method()) << endl;
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
+    if (access(path.data(), R_OK) != 0)
+        return serveError(request, 404);
     if (request.method() == GET) {
-        if (access(path.data(), R_OK) != 0)
-            return serveError(request, 404);
         if (isDirectory(path))
             return serveDirectory(request, location);
-        get(request, path);
+        mget(request, path);
+    }
+    if (request.method() == DELETE){
+        if (access(path.data(), W_OK) != 0)
+            return serveError(request, 403);
+        if (isDirectory(path))
+            return serveError(request, 403);
+        mdelete(request, path);
     }
     return 0;
 }
@@ -230,7 +245,7 @@ int Server::serveDirectory(const Request &request, const Location &location) con
             cout << "No access\n";
             return serveError(request, 404);
         }
-        return get(request, path);
+        return mget(request, path);
     }
     // else if (location.autoindex() == true)
     //     ; //Return autoindex cgi html?
@@ -301,7 +316,7 @@ int Server::serveDefaultError(const Request &request, const string &status) cons
  * @param path 
  * @return int 0 on success
  */
-int Server::get(const Request &request, const std::string &path) const {
+int Server::mget(const Request &request, const string& path) const {
     ifstream file(path.data());
     if (file.is_open() == false) {
         cout << "Failed to open\n";
@@ -311,6 +326,29 @@ int Server::get(const Request &request, const std::string &path) const {
     ss << file.rdbuf();
     string str(ss.str());
     sendResponse(request.fd(), "200 OK", "text/html", str);
+    return 0;
+}
+
+int Server::mpost(const Request& request, const string& path) const {
+    ; //application/x-www-form-urlencoded
+
+    ; //multipart/form-data
+
+    ; //text/plain
+    if (request.fd())
+        ;
+    if (path.empty())
+        ;
+
+    return 0;
+}
+
+int Server::mdelete(const Request& request, const string& path) const {
+    if (remove(path.data()) != 0){
+        sendResponse(request.fd(), "204 No Content", "text/plain", "No content");
+        return 0;
+    }
+    sendResponse(request.fd(), "200 OK", "text/plain", "File deleted");
     return 0;
 }
 

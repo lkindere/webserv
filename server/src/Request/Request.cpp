@@ -32,7 +32,20 @@ Request::Request(int fd)
     parseVariables(lines);
     parseMessage(lines);
 #ifdef DEBUG
-    cout << "Method: " << _method << '\n';
+    cout << "\nMethod: " ;
+    switch (_method){
+        case GET:
+            cout << "GET\n";
+            break;
+        case POST:
+            cout << "POST\n";
+            break;
+        case DELETE:
+            cout << "DELETE\n";
+            break;
+        default:
+            cout << "INVALID\n";
+    }
     cout << "URI: " << _uri << '\n';
     cout << "Protocol: " << _protocol << '\n';
     cout << "Host: " << _host << '\n'
@@ -128,7 +141,7 @@ void Request::parseMessage(deque< string > &lines) {
     if (lines.size() != 0 && _message.length() < content_length)
         _message.append(lines.front(), content_length - _message.length());
 #ifdef DEBUG
-    cout << "\n\nEXPECTED LENGTH: " << content_length << "\n\n";
-    cout << "\n\nFINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
+    cout << "\nEXPECTED LENGTH: " << content_length << '\n';
+    cout << "FINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
 #endif
 }
