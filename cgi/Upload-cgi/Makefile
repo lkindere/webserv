@@ -14,11 +14,8 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 
 .NOTPARALLEL:
 
-all: print_current_bin $(BIN)
+all: $(BIN)
 
-
-print_current_bin:
-	@printf "$(shell tput setaf 4)$(BIN):$(shell tput sgr0)\n"
 
 $(BIN): $(OBJECTS)
 	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
