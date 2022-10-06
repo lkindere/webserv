@@ -24,7 +24,7 @@ string getStatus(short error) {
 }
 #include <iostream>
 /**
- * @brief An abomination, give it a .extension, it will split out a type.
+ * @brief An abomination, give it a .extension, it will spit out a type.
  * @brief Don't ask me how it works, maybe it doesn't, it matters not.
  * @brief The sheer amount of time took copy pasta'ing this is enough to use it.
  * @param extension .something str
@@ -54,7 +54,7 @@ static string howDoMimesWork(const string& extension) {
     types.insert(make_pair(".jar", "application/java-archive"));
     types.insert(make_pair(".jpeg", "image/jpeg"));
     types.insert(make_pair(".jpg", "image/jpeg"));
-    types.insert(make_pair(".js", "	application/js"));
+    types.insert(make_pair(".js", "application/js"));
     types.insert(make_pair(".json", "application/json"));
     types.insert(make_pair(".mid", "audio/midi"));
     types.insert(make_pair(".midi", "audio/midi"));
