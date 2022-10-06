@@ -1,22 +1,10 @@
-#include "Request.hpp"
 
 #include <cstdlib>//atoll linux
 
-using namespace std;
+#include "Request.hpp"
+#include "uString.hpp"
 
-//Basically ft_split but in c++
-static deque< string > split(const string &str, const string &delim) {
-    deque< string > split;
-    size_t start = 0;
-    size_t end = str.find(delim);
-    while (end != str.npos) {
-        split.push_back(str.substr(start, end - start));
-        start = end + delim.length();
-        end = str.find(delim, start);
-    }
-    split.push_back(str.substr(start));
-    return split;
-}
+using namespace std;
 
 // Constructor runs all the other bs
 // Reads request splits lines by CRLF to lines deque
@@ -29,7 +17,7 @@ Request::Request(int fd)
     parseStart(lines);
     if (_method == INVALID)
         return;
-    parseVariables(lines);
+    parseHeaders(lines);
     parseMessage(lines);
 #ifdef DEBUG
     cout << "\nMethod: " ;
@@ -48,11 +36,10 @@ Request::Request(int fd)
     }
     cout << "URI: " << _uri << '\n';
     cout << "Protocol: " << _protocol << '\n';
-    cout << "Host: " << _host << '\n'
-         << '\n';
-    cout << "Obtained variables:\n";
-    for (map< string, string >::const_iterator it = _variables.begin(); it != _variables.end(); ++it)
-        cout << it->first << ' ' << it->second << '\n';
+    cout << "Host: " << _host << "\n\n";
+    cout << "Headers:\n";
+    for (deque< string >::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+        cout << *it << '\n';
     cout << "\nMessage:\n";
     cout << _message << '\n'
          << endl;
@@ -88,12 +75,11 @@ void Request::printRequest(ostream &stream) const {
             ss << "INVALID ";
     }
     ss << _uri << ' ' << _protocol << '\n';
-    for (map< string, string >::const_iterator it = _variables.begin();
-         it != _variables.end(); ++it) {
-        ss << it->first << ": " << it->second << '\n';
+    for (deque< string >::const_iterator it = _headers.begin();
+         it != _headers.end(); ++it) {
+        ss << *it << '\n';
     }
-    stream << ss.rdbuf() << '\n'
-           << _message;
+    stream << ss.rdbuf() << '\n' << _message;
 }
 
 // Splits first line of request to method/URI/protocol
@@ -110,38 +96,43 @@ void Request::parseStart(deque< string > &lines) {
 }
 
 // Saves variables line by line
-void Request::parseVariables(deque< string > &lines) {
+void Request::parseHeaders(deque< string > &lines) {
     while (lines.size() != 0 && lines.front().size() != 0) {
         deque< string > current(split(lines.front(), ": "));
         if (current.size() != 2) {
             _method = INVALID;
             return;
         }
-        _variables.insert(make_pair(current[0], current[1]));
+        _headers.push_back(lines.front());
         if (current[0] == "Host")
             _host = split(current[1], ":")[0];
+        if (current[0] == "Content-Type")
+            
         lines.pop_front();
     }
-    while (lines.size() == 0 && lines.front().size() == 0)
-        lines.pop_front();
 }
 
 // Parses message based on Content Length if there is one and the length is specified
 void Request::parseMessage(deque< string > &lines) {
-    if (_method == GET || _method == INVALID)
-        return;
-    map< string, string >::const_iterator it(_variables.find("Content-Length"));
-    if (it == _variables.end())
-        return;
-    size_t content_length = atoll(it->second.c_str());
-    while (lines.size() != 0 && _message.length() + lines.front().length() <= content_length) {
-        _message.append(lines.front());
-        lines.pop_front();
-    }
-    if (lines.size() != 0 && _message.length() < content_length)
-        _message.append(lines.front(), content_length - _message.length());
-#ifdef DEBUG
-    cout << "\nEXPECTED LENGTH: " << content_length << '\n';
-    cout << "FINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
-#endif
+    if (lines.size() != 0)
+        ;
+//     if (_method != POST)
+//         return;
+//     map< string, string >::const_iterator it(_variables.find("Content-Length"));
+//     if (it == _variables.end())
+//         return;
+//     _contentlength = atoll(it->second.c_str());
+//     it = _variables.find("Content-Type");
+//     if (it == _variables.end())
+//         return;
+//     while (lines.size() != 0 && _message.length() + lines.front().length() <= content_length) {
+//         _message.append(lines.front());
+//         lines.pop_front();
+//     }
+//     if (lines.size() != 0 && _message.length() < _contentlength)
+//         _message.append(lines.front(), _contentlength - _message.length());
+// #ifdef DEBUG
+//     cout << "\nEXPECTED LENGTH: " << _contentlength << '\n';
+//     cout << "FINAL MESSAGE LENGTH: " << _message.length() << "\n\n";
+// #endif
 }

@@ -7,6 +7,8 @@
 #include <fstream>
 #include <set>
 
+#include "uString.hpp"
+
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -41,25 +43,6 @@ static vector< string > tokenStr() {
 }
 
 /**
- * @brief Splits lines by delim
- * @param str input str
- * @param delim delimiter
- * @return deque<string> split lines
- */
-static deque< string > split(const string &str, const string &delim) {
-    deque< string > split;
-    size_t start = 0;
-    size_t end = str.find(delim);
-    while (end != str.npos) {
-        split.push_back(str.substr(start, end - start));
-        start = end + delim.length();
-        end = str.find(delim, start);
-    }
-    split.push_back(str.substr(start));
-    return split;
-}
-
-/**
  * @brief Converts single like to deque<Token>
  * @param line
  * @return deque<Token> 
@@ -67,10 +50,10 @@ static deque< string > split(const string &str, const string &delim) {
 static deque< Token > tokenize(const string &line) {
     deque< Token > tokens;
     vector< string > tstr(tokenStr());
-    deque< string > segments(split(line, " "));
+    deque< string > segments(split(line, " ", true)); //Changed to no empty line split, if errors revert + uncomment line
     for (size_t j = 0; j < segments.size(); ++j) {
-        if (segments[j].length() == 0)
-            continue;
+        // if (segments[j].length() == 0)
+        //     continue;
         for (size_t k = 0; k < tstr.size() + 1; ++k) {
             if (k == tstr.size())
                 tokens.push_back(Token(VALUE, segments[j]));

@@ -11,65 +11,10 @@
 #include <sstream>
 // #include <algorithm>
 
+#include "uString.hpp"
+#include "uMethod.hpp"
+
 using namespace std;
-
-//HELPERS
-
-/**
- * @brief Splits lines by delim
- * @param str input str
- * @param delim delimiter
- * @param noempty don't return empty strings
- * @return deque<string> split lines
- */
-static deque< string > split(const string &str, const string &delim, bool noempty = false) {
-    deque< string > split;
-    size_t start = 0;
-    size_t end = str.find(delim);
-    while (end != str.npos) {
-        string segment(str.substr(start, end - start));
-        if (noempty == false || segment.empty() == false)
-            split.push_back(segment);
-        start = end + delim.length();
-        end = str.find(delim, start);
-    }
-    string segment(str.substr(start));
-    if (noempty == false || segment.empty() == false)
-        split.push_back(segment);
-    return split;
-}
-
-/**
- * @brief Count number of equal strings from the start to the end
- * @param path deque<str>
- * @param uri deque<str>
- * @return size_t number of matches or (size_t)-1 on perfect match (all strings match)
- */
-static size_t getMatches(deque< string > &path, deque< string > &uri) {
-    size_t matches = 0;
-    for (size_t i = 0; i < path.size() && i < uri.size(); ++i) {
-        if (path[i] == uri[i])
-            ++matches;
-        else
-            break;
-    }
-    if (matches == path.size() && matches == uri.size())
-        return -1;
-    return matches;
-}
-
-/**
- * @brief Check if method is valid
- * @param allowed: vector of allowed methods, if empty all are allowed
- * @param method: method to test
- * @return int 1 on valid 0 on invalid
- */
-int validMethod(const vector< e_method > &allowed, e_method method) {
-    if (allowed.size() != 0
-        && find(allowed.begin(), allowed.end(), method) == allowed.end())
-        return 0;
-    return 1;
-}
 
 /**
  * @brief Sends a respones to fd

@@ -1,12 +1,16 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -DDEBUG
-LDFLAGS = -L./libs -lconfigparser
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -DDEBUG
+LDFLAGS = -L./libs -lconfigparser -lutils
 
 CGI_SRCS_DIR = ../cgi
 
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
 CONFIG_PARSER_INC = $(CONFIG_PARSER_DIR)/inc/
+
+UTILS_DIR = ../utils
+UTILS_LIB = $(UTILS_DIR)/libutils.a
+UTILS_INC = $(UTILS_DIR)/inc/
 
 BIN = webserv
 SRCDIR = ./src
@@ -21,7 +25,7 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
-all: compile_cgis $(CONFIG_PARSER_LIB) $(BIN)
+all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(BIN)
 	
 
 compile_cgis:
@@ -30,6 +34,10 @@ compile_cgis:
 
 $(CONFIG_PARSER_LIB):
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
+
+$(UTILS_LIB):
+	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
 $(BIN): $(OBJECTS)
@@ -50,6 +58,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
 clean:
 	@$(MAKE) -C $(CGI_SRCS_DIR) clean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
+	@$(MAKE) -C $(dir $(UTILS_LIB)) clean
 	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
 	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
 	@$(RM) -r $(BUILDDIR)
@@ -58,6 +67,7 @@ clean:
 fclean: clean
 	@$(MAKE) -C $(CGI_SRCS_DIR) fclean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
+	@$(MAKE) -C $(dir $(UTILS_LIB)) fclean
 	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
 	@$(RM) $(BIN)
 
