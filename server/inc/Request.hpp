@@ -8,8 +8,6 @@
 
 #define BUFFER_SIZE 65536
 
-enum e_method;
-
 struct ContentInfo
 {
     size_t length;

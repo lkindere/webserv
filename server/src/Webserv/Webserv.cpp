@@ -86,7 +86,9 @@ int Webserv::accept() {
  * @return int 0 on success 1 on error
  */
 int Webserv::process() {
-    int ret = poll(_connections.data(), _connections.size(), 0);
+    if (_connections.size() == 0)
+        return 0;
+    int ret = poll(_connections.data(), _connections.size(), -1);
     if (ret < 0)
         return error();
     if (ret == 0)

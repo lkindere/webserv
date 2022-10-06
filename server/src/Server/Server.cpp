@@ -12,6 +12,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include "Types.hpp"
 #include "uString.hpp"
 #include "uMethod.hpp"
 
@@ -180,18 +181,18 @@ int Server::serveDirectory(const Request &request, const Location &location) con
  * @return int 0 on success
  */
 int Server::serveError(const Request &request, short error) const {
-    string status(errorStatus(error));
+    string status(getStatus(error));
     if (errorRoot().size() == 0)
         serveDefaultError(request, status);
     map< short, string >::const_iterator it(errorPages().find(error));
     if (it == errorPages().end())
-        serveDefaultError(request, status);
+        return serveDefaultError(request, status);
     string path("." + errorRoot() + it->second);
     if (isDirectory(path) || access(path.data(), R_OK) != 0)
-        serveDefaultError(request, status);
+        return serveDefaultError(request, status);
     ifstream file(path.data());
     if (file.is_open() == false)
-        serveDefaultError(request, status);
+        return serveDefaultError(request, status);
     stringstream ss;
     ss << file.rdbuf();
     string str(ss.str());
@@ -199,24 +200,6 @@ int Server::serveError(const Request &request, short error) const {
     return 0;
 }
 
-/**
- * @brief Returns status string based on error code
- * @param error 
- * @return string 
- */
-string Server::errorStatus(short error) const {
-    map< short, string > status;
-    status.insert(make_pair(301, "301 Moved Permanently"));
-    status.insert(make_pair(400, "400 Bad Request"));
-    status.insert(make_pair(403, "403 Forbidden"));
-    status.insert(make_pair(404, "404 Not Found"));
-    status.insert(make_pair(405, "405 Method Not Allowed"));
-    status.insert(make_pair(411, "411 Length Required"));
-    status.insert(make_pair(413, "413 Payload Too Large"));
-    status.insert(make_pair(500, "500 Internal Server Error"));
-    //Add more later if needed if missing will return empty str
-    return status[error];
-}
 
 /**
  * @brief Sends a default errorpage based on error code
@@ -251,15 +234,15 @@ int Server::mget(const Request &request, const string& path) const {
     stringstream ss;
     ss << file.rdbuf();
     string str(ss.str());
-    sendResponse(request.fd(), "200 OK", "text/html", str);
+    sendResponse(request.fd(), "200 OK", getType(path), str);
     return 0;
 }
 
 int Server::multipartUploader(const Request& request, const string& path) const {
     if (request.length() == 0)
-        ;
+        return 0;
     if (path.length() == 0)
-        ;
+        return 0;
     return 0;
 }
 
@@ -282,9 +265,9 @@ int Server::mpost(const Request& request, const string& path) const {
 
 
     if (request.fd())
-        ;
+        return 0;
     if (path.empty())
-        ;
+        return 0;
 }
 
 /**
@@ -301,10 +284,10 @@ int Server::mdelete(const Request& request, const string& path) const {
     if (isDirectory(path))
         return serveError(request, 403);
     if (remove(path.data()) != 0){
-        sendResponse(request.fd(), "204 No Content", "text/plain", "No content");
+        sendResponse(request.fd(), "204 No Content", "text/html", "No content");
         return 0;
     }
-    sendResponse(request.fd(), "200 OK", "text/plain", "File deleted");
+    sendResponse(request.fd(), "200 OK", "text/html", "File deleted");
     return 0;
 }
 

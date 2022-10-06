@@ -42,8 +42,6 @@ private:
 
     int multipartUploader(const Request&, const std::string& path) const;
 
-    std::string errorStatus(short error) const;
-
 public:
     int checkNames(const std::string &name) const;
     const Location *getLocation(const std::string &uri) const;
