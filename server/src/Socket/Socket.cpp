@@ -31,11 +31,10 @@ int Socket::init() {
     if (_address.sin_addr.s_addr == INADDR_NONE)//Same as 255.255.255.255 don't allow this IP before config?
         return error();
     _fd = socket(AF_INET, SOCK_STREAM, 0);
-    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
     if (_fd < 0)
         return error();
-    if (fcntl(_fd, F_SETFL, O_NONBLOCK) != 0)
-        return error();
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+    fcntl(_fd, F_SETFL, O_NONBLOCK);
     if (bind(_fd, ( sockaddr * ) &_address, sizeof(_address)) != 0)
         return error();
     if (listen(_fd, BACKLOG) != 0)

@@ -2,6 +2,10 @@
 
 #include "Request.hpp"
 
+/**
+ * @brief Acts as a Request* for assignment, access and comparisons.
+ * @brief Allows storing additional data and functions like last_request timer
+ */
 class wrapRequest {
 public:
     wrapRequest();
@@ -14,7 +18,7 @@ public:
     Request* operator->();
 
     bool timeout(unsigned int timeout_limit);
-
+    
     ~wrapRequest();
 
 private:

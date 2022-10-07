@@ -15,8 +15,9 @@ public:
     Webserv(const ConfigData &conf);
 
     int init();
-    int accept();
     int process();
+    int accept();
+    int readwrite();
 
 private:
     int serve(Request& request);

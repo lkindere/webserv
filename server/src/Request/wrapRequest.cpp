@@ -2,9 +2,6 @@
 
 #include <sys/time.h>
 
-
-#include <iostream>
-
 using namespace std;
 
 static size_t getTime(){
@@ -14,14 +11,13 @@ static size_t getTime(){
 }
 
 wrapRequest::wrapRequest()
-    : request(NULL), last_request(getTime()) { cout << "COnstructed\n"; }
+    : request(NULL), last_request(getTime()) {}
 
 wrapRequest& wrapRequest::operator=(Request* req) {
     delete request;
     request = req;
     if (request != NULL)
         last_request = getTime();
-    cout << "Assigned: " << request << std::endl;
     return *this;
 }
 
@@ -42,9 +38,6 @@ Request* wrapRequest::operator->(){
 }
 
 bool wrapRequest::timeout(unsigned int timeout_limit){
-    cout << "Time: " << getTime() - last_request << std::endl;
-    cout << "Limit: " << timeout_limit << std::endl;
-    cout << "Request is: " << request << std::endl;
     if (request != NULL)
         return false;
     if (getTime() - last_request >= timeout_limit)

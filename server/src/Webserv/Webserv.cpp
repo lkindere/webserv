@@ -50,7 +50,7 @@ Webserv::Webserv(const ConfigData &conf) : _global(conf.global) {
 }
 
 /**
- * @brief Initializes all sockets
+ * @brief Initializes all sockets, pushes back to _connections
  * @return int 0 on success 1 on error
  */
 int Webserv::init() {
@@ -58,6 +58,10 @@ int Webserv::init() {
         int ret = _sockets[i].init();
         if (ret != 0)
             return ret;
+        pollfd pfd;
+        pfd.fd = _sockets[i].fd();
+        pfd.events = POLLIN;
+        _connections.push_back(pfd);
     }
     return 0;
 }
@@ -67,17 +71,44 @@ int Webserv::init() {
  * @return int 0 on success 1 on error
  */
 int Webserv::accept() {
-    for (size_t i = 0; i < _sockets.size(); ++i) {
-        int ret = _sockets[i].socket_accept();
-        while (ret >= 0) {
-            pollfd pfd;
-            pfd.fd = ret;
-            pfd.events = POLLIN | POLLOUT | POLLRDHUP;
-            _connections.push_back(pfd);
-            ret = _sockets[i].socket_accept();
+    for (size_t i = 0; i < _sockets.size(); ++i){
+        const short& revents = _connections[i].revents;
+        if (revents & POLLIN){
+            int ret = _sockets[i].socket_accept();
+            if (ret == -1)
+                return ret;
+            if (ret >= 0){
+                pollfd pfd;
+                pfd.fd = ret;
+                pfd.events = POLLIN | POLLRDHUP;
+                _connections.push_back(pfd);
+            }
         }
-        if (ret == -1)
-            return -1;
+        if (revents & POLLERR || revents & POLLHUP || revents & POLLNVAL)
+            throw("FATAL ERROR: POLL SOCKET ERROR");
+    }
+    return 0;
+}
+
+int Webserv::readwrite() {
+    if (_sockets.size() > _connections.size())
+        throw("FATAL ERROR: LESS CONNECTIONS THAN SOCKETS");
+    for (vector< pollfd >::iterator it = _connections.begin() + _sockets.size();
+        it != _connections.end(); ++it) {
+        if (checkclose(*it) == 1)
+            continue;
+        wrapRequest& request = _requests[it->fd];
+        if (it->revents & POLLIN && request == NULL){
+            request = new Request(it->fd, _global.client_max_body_size);
+            if (request->status() == WRITING) 
+                it->events = POLLOUT | POLLRDHUP;
+        }
+        else if (it->revents & POLLOUT && request != NULL){
+            if (serve(*request) != 0)
+                return -1;
+            if (request->status() == COMPLETED)
+                it->events = POLLIN | POLLRDHUP;
+        }
     }
     return 0;
 }
@@ -107,24 +138,16 @@ int Webserv::checkclose(pollfd& pfd){
  * @return int 0 on success 1 on error
  */
 int Webserv::process() {
-    if (_connections.size() == 0)
-        return 0;
-    int ret = poll(_connections.data(), _connections.size(), TIMEOUT);
+    int ret = poll(_connections.data(), _connections.size(), TIMEOUT * 1000);
     cout << "POLL RET: " << ret << std::endl;
     if (ret < 0)
         return error();
     if (ret == 0)
-        return 0;
-    for (vector< pollfd >::iterator it = _connections.begin(); it != _connections.end(); ++it) {
-        cout << "LOOP\n";
-        if (checkclose(*it) == 1)
-            continue;
-        else if (it->revents & POLLIN && _requests[it->fd] == NULL)
-            _requests[it->fd] = new Request(it->fd, _global.client_max_body_size);
-        else if (it->revents & POLLOUT && _requests[it->fd] != NULL)
-            if (serve(*(_requests[it->fd])) != 0)
-                return -1;
-    }
+        return rebuild();
+    if (accept() != 0)
+        return -1;
+    if (readwrite() != 0)
+        return -1;
     return rebuild();
 }
 
@@ -138,7 +161,7 @@ int Webserv::rebuild() {
         if (rit->second != NULL && rit->second->status() == COMPLETED)
             rit->second = NULL;
     }
-    vector<pollfd>::iterator cit(_connections.begin());
+    vector<pollfd>::iterator cit(_connections.begin() + _sockets.size());
     while (cit != _connections.end()){
         if (cit->fd != -1){
             map<int, wrapRequest>::iterator rit = _requests.find(cit->fd);

@@ -17,6 +17,8 @@ public:
 
     int init();
     int socket_accept();
+    
+    int fd() const { return _fd; }
 
 private:
     int _fd;
