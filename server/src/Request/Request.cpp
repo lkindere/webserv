@@ -19,6 +19,7 @@ Request::Request(int fd, size_t max_size)
     _status.max_size = max_size;
     _content.length = (size_t)-1;
     init();
+    cout << "REQ CREATED\n";
 }
 
 void Request::setError(int error){

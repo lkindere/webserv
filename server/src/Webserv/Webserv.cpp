@@ -83,20 +83,23 @@ int Webserv::accept() {
 }
 
 /**
- * @brief Checks if a connection needs to be closed and closes it
+ * @brief Closes connections if needed, setting fd to -1, removes matching request map
  * @param pfd pollfd struct
  * @return int 1 if closed 0 if not
  */
 int Webserv::checkclose(pollfd& pfd){
     if (pfd.revents & POLLERR || pfd.revents & POLLHUP 
         || pfd.revents & POLLRDHUP || pfd.revents & POLLNVAL){
+        map<int, wrapRequest>::iterator it = _requests.find(pfd.fd);
+        if (it != _requests.end())
+            _requests.erase(it);
+        shutdown(pfd.fd, SHUT_RDWR);
         close(pfd.fd);
         pfd.fd = -1;
-        cout << "FD SET TO -1\n";
+        cout << "REQUEST HUP\n";
         return 1;
     }
-    // if timeout
-    //  close
+    return 0;
 }
 
 /**
@@ -106,12 +109,14 @@ int Webserv::checkclose(pollfd& pfd){
 int Webserv::process() {
     if (_connections.size() == 0)
         return 0;
-    int ret = poll(_connections.data(), _connections.size(), -1);
+    int ret = poll(_connections.data(), _connections.size(), TIMEOUT);
+    cout << "POLL RET: " << ret << std::endl;
     if (ret < 0)
         return error();
     if (ret == 0)
         return 0;
     for (vector< pollfd >::iterator it = _connections.begin(); it != _connections.end(); ++it) {
+        cout << "LOOP\n";
         if (checkclose(*it) == 1)
             continue;
         else if (it->revents & POLLIN && _requests[it->fd] == NULL)
@@ -123,27 +128,37 @@ int Webserv::process() {
     return rebuild();
 }
 
+/**
+ * @brief NULLs completed requests, removes -1 fd connections
+ * @return int always 0
+ */
 int Webserv::rebuild() {
+    for (map<int, wrapRequest>::iterator rit = _requests.begin();
+        rit != _requests.end(); ++rit){
+        if (rit->second != NULL && rit->second->status() == COMPLETED)
+            rit->second = NULL;
+    }
     vector<pollfd>::iterator cit(_connections.begin());
     while (cit != _connections.end()){
+        if (cit->fd != -1){
+            map<int, wrapRequest>::iterator rit = _requests.find(cit->fd);
+            if (rit != _requests.end() && rit->second.timeout(TIMEOUT) == true){
+                _requests.erase(rit);
+                shutdown(cit->fd, SHUT_RDWR);
+                close(cit->fd);
+                cit->fd = -1;
+                cout << "REQUEST TIMEOUT\n";
+            }
+        }
         if (cit->fd == -1){
             cit = _connections.erase(cit);
             cout << "CONNECTION ERASED\n";
-            exit(0);
         }
         else
             ++cit;
     }
-    map<int, Request*>::iterator rit(_requests.begin());
-    while (rit != _requests.end()){
-        if (rit->second != NULL && rit->second->status() == COMPLETED){
-            cout << "\nREQUEST DELETED\n";
-            delete rit->second;
-            _requests.erase(rit++);
-        }
-        else
-            ++rit;
-    }
+    cout << "\nConnections size: " << _connections.size() << '\n';
+    cout << "Requests size:    " << _requests.size() << "\n\n";
     return 0;
 }
 

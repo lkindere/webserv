@@ -31,6 +31,7 @@ int Socket::init() {
     if (_address.sin_addr.s_addr == INADDR_NONE)//Same as 255.255.255.255 don't allow this IP before config?
         return error();
     _fd = socket(AF_INET, SOCK_STREAM, 0);
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
     if (_fd < 0)
         return error();
     if (fcntl(_fd, F_SETFL, O_NONBLOCK) != 0)
@@ -54,6 +55,7 @@ int Socket::socket_accept() {
             return error();
         return -1337;
     }
+    setsockopt(accepted_fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
     fcntl(accepted_fd, F_SETFL, O_NONBLOCK);
     return accepted_fd;
 }
