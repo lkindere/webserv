@@ -1,5 +1,6 @@
 #include "Webserv.hpp"
 
+#include <unistd.h>
 #include <cstring>  //memset cuz linux doesn't like the same initializers
 #include <algorithm>//std::find linux
 #include <set>
@@ -71,7 +72,7 @@ int Webserv::accept() {
         while (ret >= 0) {
             pollfd pfd;
             pfd.fd = ret;
-            pfd.events = POLLIN | POLLOUT;
+            pfd.events = POLLIN | POLLOUT | POLLRDHUP;
             _connections.push_back(pfd);
             ret = _sockets[i].socket_accept();
         }
@@ -82,7 +83,24 @@ int Webserv::accept() {
 }
 
 /**
- * @brief Loops through all connections, pushes reads to requests, serves writable
+ * @brief Checks if a connection needs to be closed and closes it
+ * @param pfd pollfd struct
+ * @return int 1 if closed 0 if not
+ */
+int Webserv::checkclose(pollfd& pfd){
+    if (pfd.revents & POLLERR || pfd.revents & POLLHUP 
+        || pfd.revents & POLLRDHUP || pfd.revents & POLLNVAL){
+        close(pfd.fd);
+        pfd.fd = -1;
+        cout << "FD SET TO -1\n";
+        return 1;
+    }
+    // if timeout
+    //  close
+}
+
+/**
+ * @brief Loops through all connections, closes invalid, creates Requests, serves to servers
  * @return int 0 on success 1 on error
  */
 int Webserv::process() {
@@ -93,37 +111,54 @@ int Webserv::process() {
         return error();
     if (ret == 0)
         return 0;
-    for (vector< pollfd >::iterator it = _connections.begin();
-         it != _connections.end(); ++it) {
-        if (it->revents & POLLERR || it->revents & POLLHUP || it->revents & POLLNVAL)
-            it->fd = -1;
-        if (it->revents & POLLIN)
-            _requests[it->fd].push_back(Request(it->fd, _global.client_max_body_size));
-        if (it->revents & POLLOUT) {
-            if (serve(it->fd) != 0)
+    for (vector< pollfd >::iterator it = _connections.begin(); it != _connections.end(); ++it) {
+        if (checkclose(*it) == 1)
+            continue;
+        else if (it->revents & POLLIN && _requests[it->fd] == NULL)
+            _requests[it->fd] = new Request(it->fd, _global.client_max_body_size);
+        else if (it->revents & POLLOUT && _requests[it->fd] != NULL)
+            if (serve(*(_requests[it->fd])) != 0)
                 return -1;
-        }
     }
-    //Rebuild vector without -1 connections?
+    return rebuild();
+}
+
+int Webserv::rebuild() {
+    vector<pollfd>::iterator cit(_connections.begin());
+    while (cit != _connections.end()){
+        if (cit->fd == -1){
+            cit = _connections.erase(cit);
+            cout << "CONNECTION ERASED\n";
+            exit(0);
+        }
+        else
+            ++cit;
+    }
+    map<int, Request*>::iterator rit(_requests.begin());
+    while (rit != _requests.end()){
+        if (rit->second != NULL && rit->second->status() == COMPLETED){
+            cout << "\nREQUEST DELETED\n";
+            delete rit->second;
+            _requests.erase(rit++);
+        }
+        else
+            ++rit;
+    }
     return 0;
 }
 
-/**
+/**~
  * @brief Serves a writeable fd if there are pending requests
  * @param fd 
  * @return int 0 on success -1 on error
  */
-int Webserv::serve(int fd) {
-    map< int, deque< Request > >::iterator it(_requests.find(fd));
-    if (it == _requests.end() || it->second.size() == 0)
-        return 0;
-    Server *server(getServer(it->second.front()));
-    if (server == NULL) {
-        cout << "SHOULDN'T HAPPEN EITHER\n";
+int Webserv::serve(Request& request) {
+    const Server *server(getServer(request));
+    if (server == NULL){
+        throw("SHOULDN'T HAPPEN");
         return -1;
     }
-    server->serve(it->second.front());
-    it->second.pop_front();
+    server->serve(request);
     return 0;
 }
 
@@ -132,8 +167,8 @@ int Webserv::serve(int fd) {
  * @param request 
  * @return Server* server or NULL if not found
  */
-Server *Webserv::getServer(const Request &request) {
-    Server *first = NULL;
+const Server *Webserv::getServer(Request &request) {
+    const Server *first = NULL;
     pair< string, short > host(getHost(request.fd()));
     for (size_t i = 0; i < _servers.size(); ++i) {
         if (_servers[i].host() != host.first || _servers[i].port() != host.second)
@@ -146,6 +181,6 @@ Server *Webserv::getServer(const Request &request) {
         return &_servers[i];
     }
     if (first == NULL)
-        cout << "THIS SHOULD NOT HAPPEN, SMTH SMTH ERROR\n";
+        throw("THIS SHOULD NOT HAPPEN, SMTH SMTH ERROR");
     return first;
 }

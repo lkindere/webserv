@@ -8,32 +8,57 @@
 
 #define BUFFER_SIZE 65536
 
-struct ContentInfo
+enum e_rstat
+{
+    READING,
+    WRITING,
+    COMPLETED
+};
+
+struct reqStatus
+{
+    int error;
+    e_rstat status;
+    size_t max_size;
+};
+
+struct reqInfo
+{
+    e_method method;
+    std::string uri;
+    std::string protocol;
+    std::string host;
+};
+
+struct reqContent
 {
     size_t length;
     std::string boundary;
     std::set< std::string> types;
+    std::string message;
+    std::deque< std::string > headers;
 };
 
 class Request {
 public:
     Request(int fd, size_t size_max);
+    void setStatus(e_rstat status) { _status.status = status; }
 
 public:
-    int fd() const { return _fd; }
-    e_method method() const { return _method; }
+    int                 fd() const { return _fd; }
+    e_rstat             status() const { return _status.status; }
+    int                 error() const { return _status.error; }
 
-    const std::string &uri() const { return _uri; }
-    const std::string &protocol() const { return _protocol; }
-    const std::deque< std::string> &headers() { return _headers; }
-    const std::string &message() const { return _message; }
-    const std::string &host() const { return _host; }
+    e_method            method() const { return _info.method; }
+    const std::string&  uri() const { return _info.uri; }
+    const std::string&  protocol() const { return _info.protocol; }
+    const std::string&  host() const { return _info.host; }
+
+    size_t              length() const { return _content.length; }
+    const std::string&  boundary() const { return _content.boundary; }
+    const std::string&  message() const { return _content.message; }
     const std::set< std::string > &types() const { return _content.types; }
-    const std::string& boundary() const { return _content.boundary; }
-    size_t length() const { return _content.length; }
-    int error() const { return _error; }
-
-    void printRequest(std::ostream &stream) const;
+    const std::deque< std::string> &headers() { return _content.headers; }
 
 private:
     void init();
@@ -44,14 +69,8 @@ private:
     void setError(int error);
 
 private:
-    int _fd;
-    int _error;
-    size_t _size_max;
-    e_method _method;
-    std::string _uri;
-    std::string _protocol;
-    std::string _host;
-    ContentInfo _content;
-    std::string _message;
-    std::deque< std::string > _headers;
+    int         _fd;
+    reqStatus   _status;
+    reqInfo     _info;
+    reqContent  _content;
 };

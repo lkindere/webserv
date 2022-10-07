@@ -27,20 +27,20 @@ class Server {
 public:
     Server(GlobalConfig *global, const ServerConfig &conf);
 
-    int serve(const Request &request) const;
+    int serve(Request &request) const;
 
 private:
-    int serveRoot(const Request &request) const;
-    int serveLocation(const Request &request, const Location &location) const;
-    int serveDirectory(const Request &request, const Location &location) const;
-    int serveError(const Request &request, short error) const;
-    int serveDefaultError(const Request &request, const std::string &status) const;
+    int serveRoot(Request &request) const;
+    int serveLocation(Request &request, const Location &location) const;
+    int serveDirectory(Request &request, const Location &location) const;
+    int serveError(Request &request, short error) const;
+    int serveDefaultError(Request &request, const std::string &status) const;
     
-    int mget(const Request &request, const std::string &path) const;
-    int mpost(const Request &request, const std::string &path) const;
-    int mdelete(const Request &request, const std::string &path) const;
+    int mget(Request &request, const std::string &path) const;
+    int mpost(Request &request, const std::string &path) const;
+    int mdelete(Request &request, const std::string &path) const;
 
-    int multipartUploader(const Request&, const std::string& path) const;
+    int multipartUploader(Request& request, const std::string& path) const;
 
 public:
     int checkNames(const std::string &name) const;

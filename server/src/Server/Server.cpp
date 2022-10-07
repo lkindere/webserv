@@ -92,7 +92,7 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
  * @param request 
  * @return int 0 on success
  */
-int Server::serve(const Request &request) const {
+int Server::serve(Request &request) const {
 #ifdef DEBUG
     cout << "Server   " << host() << ':' << port() << " received request\n";
     cout << "Request: " << request.host() << ' ' << request.uri() << '\n';
@@ -113,7 +113,7 @@ int Server::serve(const Request &request) const {
  * @param request 
  * @return int 0 on success
  */
-int Server::serveRoot(const Request &request) const {
+int Server::serveRoot(Request &request) const {
     cout << "Serving root\n";
     string path("." + root() + request.uri());
 #ifdef DEBUG
@@ -138,7 +138,7 @@ int Server::serveRoot(const Request &request) const {
  * @param location 
  * @return int 0 on success
  */
-int Server::serveLocation(const Request &request, const Location &location) const {
+int Server::serveLocation(Request &request, const Location &location) const {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
@@ -159,7 +159,7 @@ int Server::serveLocation(const Request &request, const Location &location) cons
  * @param location 
  * @return int 0 on success
  */
-int Server::serveDirectory(const Request &request, const Location &location) const {
+int Server::serveDirectory(Request &request, const Location &location) const {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (path[path.length() - 1] != '/')
         path += "/";
@@ -180,7 +180,7 @@ int Server::serveDirectory(const Request &request, const Location &location) con
  * @param error errorcode
  * @return int 0 on success
  */
-int Server::serveError(const Request &request, short error) const {
+int Server::serveError(Request &request, short error) const {
     string status(getStatus(error));
     if (errorRoot().size() == 0)
         serveDefaultError(request, status);
@@ -197,6 +197,7 @@ int Server::serveError(const Request &request, short error) const {
     ss << file.rdbuf();
     string str(ss.str());
     sendResponse(request.fd(), status, "text/html", str);
+    request.setStatus(COMPLETED);
     return 0;
 }
 
@@ -207,11 +208,12 @@ int Server::serveError(const Request &request, short error) const {
  * @param status 
  * @return int 0 on success
  */
-int Server::serveDefaultError(const Request &request, const string &status) const {
+int Server::serveDefaultError(Request &request, const string &status) const {
     string msg("<!DOCTYPE html><html><head><title>");
     msg += status + "</title></head><body><h1>";
     msg += status + "</h1></body></html>";
     sendResponse(request.fd(), status, "text/html", msg);
+    request.setStatus(COMPLETED);
 	return 0;
 }
 
@@ -221,7 +223,7 @@ int Server::serveDefaultError(const Request &request, const string &status) cons
  * @param path 
  * @return int 0 on success
  */
-int Server::mget(const Request &request, const string& path) const {
+int Server::mget(Request &request, const string& path) const {
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), R_OK) != 0)
@@ -235,10 +237,12 @@ int Server::mget(const Request &request, const string& path) const {
     ss << file.rdbuf();
     string str(ss.str());
     sendResponse(request.fd(), "200 OK", getType(path), str);
+    request.setStatus(COMPLETED);
     return 0;
 }
 
-int Server::multipartUploader(const Request& request, const string& path) const {
+int Server::multipartUploader(Request& request, const string& path) const {
+    request.setStatus(COMPLETED);
     if (request.length() == 0)
         return 0;
     if (path.length() == 0)
@@ -246,7 +250,10 @@ int Server::multipartUploader(const Request& request, const string& path) const 
     return 0;
 }
 
-int Server::mpost(const Request& request, const string& path) const {
+int Server::mpost(Request& request, const string& path) const {
+    request.setStatus(COMPLETED);
+
+
     const set<string>& types = request.types();
     for (set<string>::const_iterator it = types.begin();
         it != types.end(); ++it)
@@ -276,7 +283,7 @@ int Server::mpost(const Request& request, const string& path) const {
  * @param path 
  * @return int always 0
  */
-int Server::mdelete(const Request& request, const string& path) const {
+int Server::mdelete(Request& request, const string& path) const {
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), W_OK) != 0)
@@ -288,6 +295,7 @@ int Server::mdelete(const Request& request, const string& path) const {
         return 0;
     }
     sendResponse(request.fd(), "200 OK", "text/html", "File deleted");
+    request.setStatus(COMPLETED);
     return 0;
 }
 

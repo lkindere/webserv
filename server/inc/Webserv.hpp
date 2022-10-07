@@ -4,6 +4,7 @@
 
 #include <list>
 #include <vector>
+#include <memory>
 
 #include "Config.hpp"
 #include "Request.hpp"
@@ -19,13 +20,15 @@ public:
     int process();
 
 private:
-    int serve(int fd);
-    Server *getServer(const Request &request);
+    int serve(Request& request);
+    int checkclose(pollfd& pfd);
+    int rebuild();
+    const Server *getServer(Request &request);
 
 private:
     GlobalConfig _global;
     std::vector< Socket > _sockets;
     std::vector< Server > _servers;
     std::vector< pollfd > _connections;
-    std::map< int, std::deque< Request > > _requests;
+    std::map< int, Request* > _requests;
 };
