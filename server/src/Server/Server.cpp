@@ -125,10 +125,8 @@ int Server::serveRoot(Request &request) const {
         return mget(request, path);
     if (request.method() == DELETE)
         return mdelete(request, path);
-    if (request.method() == POST){
-        ; //?? probably more checks later
+    if (request.method() == POST)
         return mpost(request, path);
-    }
     return 0;
 }
 
@@ -146,10 +144,8 @@ int Server::serveLocation(Request &request, const Location &location) const {
         return mget(request, path);
     if (request.method() == DELETE)
         return mdelete(request, path);
-    if (request.method() == POST){
-        ; //?? probably more checks later
-        mpost(request, path);
-    }
+    if (request.method() == POST)
+        return mpost(request, path);
     return 0;
 }
 
@@ -181,6 +177,7 @@ int Server::serveDirectory(Request &request, const Location &location) const {
  * @return int 0 on success
  */
 int Server::serveError(Request &request, short error) const {
+    cout << "SERVE ERROR\n";
     string status(getStatus(error));
     if (errorRoot().size() == 0)
         serveDefaultError(request, status);
@@ -243,38 +240,42 @@ int Server::mget(Request &request, const string& path) const {
 
 int Server::multipartUploader(Request& request, const string& path) const {
     request.setStatus(COMPLETED);
-    if (request.length() == 0)
-        return 0;
-    if (path.length() == 0)
-        return 0;
+    (void)request;
+    (void)path;
+    return 0;
+}
+
+//Add a way to keep track of upload status, maybe adding extra stuff to wrapRequest and using that
+//Switching between READING/WRITING until completely wrote content size amount
+//Add separate read function to request
+int Server::plainUploader(Request& request, const string& path) const {
+    // if (access(path.data(), F_OK) == 0)  //Will need a way to tell whether it's the first read and file exists
+    //     return serveError(request, 405);     //or file exists because there was a write to it already
+    ofstream file(path.data(), ofstream::app);
+    if (file.is_open() == false)
+        return serveError(request, 405);
+    file << request.message();
+    // if (request.readlength() >= request.contentlength()){
+        request.setStatus(COMPLETED);
+        string msg("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1></body></html>");
+        sendResponse(request.fd(), "201 Created", "text/plain", msg);
+    // }
+    // else
+    //     request.setStatus(READING);
     return 0;
 }
 
 int Server::mpost(Request& request, const string& path) const {
-    request.setStatus(COMPLETED);
-
-
     const set<string>& types = request.types();
-    for (set<string>::const_iterator it = types.begin();
-        it != types.end(); ++it)
-        cout << "TYPE: " << *it << '\n';
-    cout << "BOUNDARY: " << request.boundary() << '\n';
-    cout << "SIZE: " << request.length() << std::endl;
-
-    if (types.find("application/x-www-form-urlencoded") != types.end())
+    if (types.find("application/x-www-form-urlencoded") != types.end()){
+        request.setStatus(COMPLETED);
         return 0; //Not inplemented
+    }
     else if (types.find("multipart/form-data") != types.end())
         return multipartUploader(request, path);
-        
+    else
+        return plainUploader(request, path);
     return 0; //Not implemented - text/plain
-
-
-
-
-    if (request.fd())
-        return 0;
-    if (path.empty())
-        return 0;
 }
 
 /**

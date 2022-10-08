@@ -84,8 +84,6 @@ int Webserv::accept() {
                 _connections.push_back(pfd);
             }
         }
-        if (revents & POLLERR || revents & POLLHUP || revents & POLLNVAL)
-            throw("FATAL ERROR: POLL SOCKET ERROR");
     }
     return 0;
 }

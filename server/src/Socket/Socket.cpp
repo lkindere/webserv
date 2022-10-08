@@ -33,7 +33,7 @@ int Socket::init() {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd < 0)
         return error();
-    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT | SO_REUSEADDR, NULL, 0);
     fcntl(_fd, F_SETFL, O_NONBLOCK);
     if (bind(_fd, ( sockaddr * ) &_address, sizeof(_address)) != 0)
         return error();

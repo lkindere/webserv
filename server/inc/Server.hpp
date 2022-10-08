@@ -40,6 +40,7 @@ private:
     int mpost(Request &request, const std::string &path) const;
     int mdelete(Request &request, const std::string &path) const;
 
+    int plainUploader(Request& request, const std::string& path) const;
     int multipartUploader(Request& request, const std::string& path) const;
 
 public:
