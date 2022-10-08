@@ -239,9 +239,35 @@ int Server::mget(Request &request, const string& path) const {
 }
 
 int Server::multipartUploader(Request& request, const string& path) const {
-    request.setStatus(COMPLETED);
-    (void)request;
-    (void)path;
+    size_t start = 0;
+    size_t end = request.message().find("\r\n--" + request.boundary() + "--");
+    if (end == string::npos)
+        end = request.message().length();
+    if (request.writtenlength() == 0){
+        if (access(path.data(), F_OK) == 0)
+            return serveError(request, 405);
+        start = request.message().find("\r\n\r\n");
+        if (start == string::npos)
+            return serveError(request, 400);
+        start += 4;
+    }
+    ofstream file(path.data(), ofstream::app);
+    if (file.is_open() == false)
+        return serveError(request, 500);
+    file.write(&request.message()[start], end - start);
+    request.setWritten(request.writtenlength() + request.message().length());
+#ifdef DEBUG
+    cout << "CONTENT LEN: " << request.contentlength() << std::endl;
+    cout << "READ LEN   : " << request.readlength() << std::endl;
+    cout << "WRITTEN LEN: " << request.writtenlength() << std::endl;
+#endif
+    if (request.writtenlength() >= request.contentlength()){
+        request.setStatus(COMPLETED);
+        string msg("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1></body></html>");
+        sendResponse(request.fd(), "201 Created", "text/plain", msg);
+    }
+    else
+        request.setStatus(READING);
     return 0;
 }
 
@@ -249,25 +275,32 @@ int Server::multipartUploader(Request& request, const string& path) const {
 //Switching between READING/WRITING until completely wrote content size amount
 //Add separate read function to request
 int Server::plainUploader(Request& request, const string& path) const {
-    // if (access(path.data(), F_OK) == 0)  //Will need a way to tell whether it's the first read and file exists
-    //     return serveError(request, 405);     //or file exists because there was a write to it already
+    if (request.writtenlength() == 0 && access(path.data(), F_OK) == 0)
+        return serveError(request, 405);
     ofstream file(path.data(), ofstream::app);
     if (file.is_open() == false)
-        return serveError(request, 405);
-    file << request.message();
-    // if (request.readlength() >= request.contentlength()){
+        return serveError(request, 500);
+    file.write(request.message().data(), request.message().size());
+    request.setWritten(request.writtenlength() + request.message().length());
+#ifdef DEBUG
+    cout << "CONTENT LEN: " << request.contentlength() << std::endl;
+    cout << "READ LEN   : " << request.readlength() << std::endl;
+    cout << "WRITTEN LEN: " << request.writtenlength() << std::endl;
+#endif
+    if (request.writtenlength() >= request.contentlength()){
         request.setStatus(COMPLETED);
         string msg("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1></body></html>");
         sendResponse(request.fd(), "201 Created", "text/plain", msg);
-    // }
-    // else
-    //     request.setStatus(READING);
+    }
+    else
+        request.setStatus(READING);
     return 0;
 }
 
 int Server::mpost(Request& request, const string& path) const {
     const set<string>& types = request.types();
     if (types.find("application/x-www-form-urlencoded") != types.end()){
+        cout << "URLENCODED SETTING COMPLETED\n";
         request.setStatus(COMPLETED);
         return 0; //Not inplemented
     }

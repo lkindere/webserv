@@ -80,7 +80,7 @@ int Webserv::accept() {
             if (ret >= 0){
                 pollfd pfd;
                 pfd.fd = ret;
-                pfd.events = POLLIN | POLLRDHUP;
+                pfd.events = POLLIN;
                 _connections.push_back(pfd);
             }
         }
@@ -96,16 +96,22 @@ int Webserv::readwrite() {
         if (checkclose(*it) == 1)
             continue;
         wrapRequest& request = _requests[it->fd];
-        if (it->revents & POLLIN && request == NULL){
-            request = new Request(it->fd, _global.client_max_body_size);
+        if (it->revents & POLLIN){
+            if (request == NULL){
+                cout << "\nREQUEST IS NULL, READING TO NEW\n";
+                request = new Request(it->fd, _global.client_max_body_size);
+            }
+            else {
+                cout << "\nREQUEST NOT NULL, READING TO SAME\n";
+                request->readMessage();
+            }
             if (request->status() == WRITING) 
-                it->events = POLLOUT | POLLRDHUP;
+                it->events = POLLOUT;
         }
         else if (it->revents & POLLOUT && request != NULL){
             if (serve(*request) != 0)
                 return -1;
-            if (request->status() == COMPLETED)
-                it->events = POLLIN | POLLRDHUP;
+            it->events = POLLIN;
         }
     }
     return 0;
@@ -117,8 +123,7 @@ int Webserv::readwrite() {
  * @return int 1 if closed 0 if not
  */
 int Webserv::checkclose(pollfd& pfd){
-    if (pfd.revents & POLLERR || pfd.revents & POLLHUP 
-        || pfd.revents & POLLRDHUP || pfd.revents & POLLNVAL){
+    if (pfd.revents & POLLERR || pfd.revents & POLLHUP || pfd.revents & POLLNVAL){
         map<int, wrapRequest>::iterator it = _requests.find(pfd.fd);
         if (it != _requests.end())
             _requests.erase(it);
@@ -142,8 +147,10 @@ int Webserv::process() {
         return error();
     if (ret == 0)
         return rebuild();
+    // cout << "Accepting\n";
     if (accept() != 0)
         return -1;
+    // cout << "Readwriting\n";
     if (readwrite() != 0)
         return -1;
     return rebuild();
@@ -156,8 +163,10 @@ int Webserv::process() {
 int Webserv::rebuild() {
     for (map<int, wrapRequest>::iterator rit = _requests.begin();
         rit != _requests.end(); ++rit){
-        if (rit->second != NULL && rit->second->status() == COMPLETED)
+        if (rit->second != NULL && rit->second->status() == COMPLETED){
+            cout << "STATUS COMPLETED, SETTING NULL\n";
             rit->second = NULL;
+        }
     }
     vector<pollfd>::iterator cit(_connections.begin() + _sockets.size());
     while (cit != _connections.end()){

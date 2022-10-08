@@ -32,7 +32,9 @@ struct reqInfo
 
 struct reqContent
 {
-    size_t length;
+    size_t contentlength;
+    size_t readlength;
+    size_t writtenlength;
     std::string boundary;
     std::set< std::string> types;
     std::string message;
@@ -54,11 +56,16 @@ public:
     const std::string&  protocol() const { return _info.protocol; }
     const std::string&  host() const { return _info.host; }
 
-    size_t              length() const { return _content.length; }
+    size_t              contentlength() const { return _content.contentlength; }
+    size_t              readlength() const { return _content.readlength; }
+    size_t              writtenlength() const { return _content.writtenlength; }
     const std::string&  boundary() const { return _content.boundary; }
     const std::string&  message() const { return _content.message; }
     const std::set< std::string > &types() const { return _content.types; }
     const std::deque< std::string> &headers() { return _content.headers; }
+
+    void                setWritten(size_t len) { _content.writtenlength = len; }
+    void                readMessage();
 
 private:
     void init();
