@@ -63,6 +63,10 @@ int validMethod(const vector< e_method > &allowed, e_method method) {
     return 1;
 }
 
+// Better to take an "Response" Object?
+// Super static right now
+// Hard to add cookie to that
+// https://github.com/pocoproject/poco/blob/master/Net/src/HTTPResponse.cpp
 ssize_t sendResponse(int fd, const std::string &status, const std::string &type, const std::string &message) {
 #ifdef DEBUG
     std::cout << "Sending response:\n";

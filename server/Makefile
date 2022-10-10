@@ -1,8 +1,6 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC)
-LDFLAGS = -L./libs -lconfigparser
-
-CGI_SRCS_DIR = ../cgi
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -g3 -DDEBUG
+LDFLAGS = -L./libs -lconfigparser -lutils
 
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
@@ -47,7 +45,6 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
 
 .PHONY: clean
 clean:
-	@$(MAKE) -C $(CGI_SRCS_DIR) clean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
 	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
 	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
@@ -55,7 +52,6 @@ clean:
 
 .PHONY: fclean
 fclean: clean
-	@$(MAKE) -C $(CGI_SRCS_DIR) fclean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
 	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
 	@$(RM) $(BIN)
@@ -71,6 +67,3 @@ run: all
 .PHONY: debug
 debug:
 	$(CXX) -g -DDEBUG $(CXXFLAGS) $(SOURCES) $(LDFLAGS) -o $(BIN)_debug
-
-get_cgi_bin_dir:
-	@echo $(CURDIR)/cgi-bin
