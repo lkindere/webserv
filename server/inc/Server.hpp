@@ -5,7 +5,6 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
-
 class Location {
 public:
     Location(const LocationConfig &conf)
@@ -31,23 +30,30 @@ public:
     int serve(Request &request) const;
 
 private:
+    //Server
     int serveRoot(Request &request) const;
     int serveLocation(Request &request, const Location &location) const;
     int serveDirectory(Request &request, const Location &location) const;
+    int serveRedirect(Request& request, const Location& location) const;
     int serveAutoindex(Request& request, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
-    
+
+    //ServerMethods
     int mget(Request &request, const std::string &path) const;
     int mpost(Request &request, const std::string &path) const;
     int mdelete(Request &request, const std::string &path) const;
 
+    //ServerUpload
     int plainUploader(Request& request, const std::string& path) const;
     int multipartUploader(Request& request, const std::string& path) const;
 
 public:
+    //ServerMisc
     int checkNames(const std::string &name) const;
     const Location *getLocation(const std::string &uri) const;
+
+    //Getters
     const std::string &host() const { return _config.host; }
     int port() const { return _config.port; }
     const std::vector< std::string > &names() { return _config.server_names; }
@@ -60,3 +66,9 @@ private:
     ServerConfig _config;
     std::vector< Location > _locations;
 };
+
+//ServerMisc
+ssize_t     sendResponse(int fd, const std::string &status, const std::string &type,
+    const std::string &message, const std::vector<std::string>& headers = std::vector<std::string>());
+std::string generateLocationURI(const std::string &root, const std::string &location, const std::string &request);
+int         isDirectory(const std::string &path);
