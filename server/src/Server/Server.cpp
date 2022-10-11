@@ -56,7 +56,8 @@ string generateLocationURI(const std::string &root, const std::string &location,
  * @param message 
  * @return ssize_t bytes written 
  */
-ssize_t sendResponse(int fd, const std::string &status, const std::string &type, const std::string &message) {
+ssize_t sendResponse(int fd, const std::string &status, const std::string &type,
+    const string &message, const vector<string>& headers = vector<string>()) {
 #ifdef DEBUG
     std::cout << "Sending response:\n";
     std::cout << "HTTP/1.1" << ' ' << status << '\n'
@@ -65,10 +66,12 @@ ssize_t sendResponse(int fd, const std::string &status, const std::string &type,
               << message << std::endl;
 #endif
     std::stringstream ss;
-    ss << "HTTP/1.1" << ' ' << status << '\n'
-       << "Content-Type: " << type << '\n'
-       << "Content-Length: " << message.size() << "\n\n"
-       << message;
+    ss << "HTTP/1.1" << ' ' << status << "\r\n"
+       << "Content-Type: " << type << "\r\n"
+       << "Content-Length: " << message.size() << "\r\n";
+    for (size_t i = 0; i < headers.size(); ++i)
+        ss << headers[i] << "\r\n";
+    ss << "\r\n" << message;
     std::string response(ss.str());
     return write(fd, response.c_str(), response.length());
 }
@@ -131,6 +134,20 @@ int Server::serveRoot(Request &request) const {
 }
 
 /**
+ * @brief Sends a 301 redirect, creates location header
+ * @param request 
+ * @param location 
+ * @return int always 0 for now
+ */
+int serveRedirect(Request& request, const Location& location){
+    cout << "SERVING REDIRECT\n";
+    vector<string> headers;
+    headers.push_back("Location: " + location.redirect());
+    sendResponse(request.fd(), "301 Moved Permanently", "text/html", string(), headers);
+    return 0;
+}
+
+/**
  * @brief Serves from server location
  * @param request 
  * @param location 
@@ -140,6 +157,8 @@ int Server::serveLocation(Request &request, const Location &location) const {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
+    if (location.redirect().length() != 0)
+        return serveRedirect(request, location);
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)

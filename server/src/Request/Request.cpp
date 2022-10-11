@@ -56,10 +56,10 @@ void Request::init() {
     for (set< string>::const_iterator it = _content.types.begin(); it != _content.types.end(); ++it)
         cout << *it << " - ";
     cout << "\nBoundary: " << _content.boundary << '\n';
-    cout << "\nMessage:\n";
-    cout << _content.message << '\n'
-         << endl;
-    cout << "\n\n";
+    // cout << "\nMessage:\n";
+    // cout << _content.message << '\n'
+    //      << endl;
+    // cout << "\n\n";
 #endif
 }
 
@@ -88,9 +88,9 @@ void Request::readMessage() {
     _content.message.resize(bytes_read);
     _content.readlength += bytes_read;
     _status.status = WRITING;
-#ifdef DEBUG
-    cout << "\nRead message:\n" << _content.message << "\n\n";
-#endif 
+// #ifdef DEBUG
+//     cout << "\nRead message:\n" << _content.message << "\n\n";
+// #endif 
 }
 
 // Splits first line of request to method/URI/protocol
