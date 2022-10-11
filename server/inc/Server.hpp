@@ -8,7 +8,8 @@
 
 class Location {
 public:
-    Location(const LocationConfig &conf);
+    Location(const LocationConfig &conf)
+        : _config(conf) {}
 
     const std::string &uri() const { return _config.uri; }
     const std::string &root() const { return _config.root; }
@@ -33,6 +34,7 @@ private:
     int serveRoot(Request &request) const;
     int serveLocation(Request &request, const Location &location) const;
     int serveDirectory(Request &request, const Location &location) const;
+    int serveAutoindex(Request& request, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
     

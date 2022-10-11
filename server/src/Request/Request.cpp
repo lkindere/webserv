@@ -56,10 +56,10 @@ void Request::init() {
     for (set< string>::const_iterator it = _content.types.begin(); it != _content.types.end(); ++it)
         cout << *it << " - ";
     cout << "\nBoundary: " << _content.boundary << '\n';
-    // cout << "\nMessage:\n";
-    // cout << _content.message << '\n'
-    //      << endl;
-    // cout << "\n\n";
+    cout << "\nMessage:\n";
+    cout << _content.message << '\n'
+         << endl;
+    cout << "\n\n";
 #endif
 }
 

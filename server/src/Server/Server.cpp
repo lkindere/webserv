@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdio> // remove()
+#include <sys/types.h>// opendir()
+#include <dirent.h> // readdir()
 
 #include <deque>
 #include <iostream>
@@ -75,11 +77,6 @@ ssize_t sendResponse(int fd, const std::string &status, const std::string &type,
     std::string response(ss.str());
     return write(fd, response.c_str(), response.length());
 }
-
-//LOCATION
-
-Location::Location(const LocationConfig &conf)
-    : _config(conf) {}
 
 //SERVER
 
@@ -159,12 +156,39 @@ int Server::serveLocation(Request &request, const Location &location) const {
         return serveError(request, 405);
     if (location.redirect().length() != 0)
         return serveRedirect(request, location);
+    if (isDirectory(path))
+        return serveDirectory(request, location);
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
         return mdelete(request, path);
     if (request.method() == POST)
         return mpost(request, path);
+    return 0;
+}
+
+/**
+ * @brief Serves a basic autoindex listing
+ * @param request 
+ * @param path full filepath for reading
+ * @return int 0 on success
+ */
+int Server::serveAutoindex(Request& request, const string& path) const {
+    stringstream ss;
+    DIR* dir = opendir(path.data());
+    if (dir == NULL)
+        return serveError(request, 500);
+    ss << "<!DOCTYPE html><html>";
+    ss << "<head><title>Autoindex</title></head><body>";
+    ss << "<h1>Index " << request.uri() << "\n\n\n\n</h1>";
+    for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)){
+        string filename(ent->d_name);
+        if (filename != "." && filename != "..")
+            ss << "<p><a href=\"/" << filename << "\">" << filename << "</a></p>";
+    }
+    ss << "</body></html>";
+    sendResponse(request.fd(), "200 OK", "text/html", ss.str());
+    request.setStatus(COMPLETED);
     return 0;
 }
 
@@ -181,11 +205,12 @@ int Server::serveDirectory(Request &request, const Location &location) const {
     if (request.method() != GET)
         return serveError(request, 405);
     if (location.index().length() != 0) {
-        path += location.index();
-        return mget(request, path);
+        string indexpath = path + location.index();
+        if (access(indexpath.data(), F_OK) == 0)
+            return mget(request, indexpath);
     }
-    // else if (location.autoindex() == true)
-    //     ; //Return autoindex cgi html?
+    if (location.autoindex() == true)
+        return serveAutoindex(request, path);
     return serveError(request, 403);
 }
 
