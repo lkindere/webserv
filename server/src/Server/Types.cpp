@@ -18,7 +18,10 @@ string getStatus(short error) {
     status.insert(make_pair(405, "405 Method Not Allowed"));
     status.insert(make_pair(411, "411 Length Required"));
     status.insert(make_pair(413, "413 Payload Too Large"));
+    status.insert(make_pair(414, "414 URI Too Long"));
+    status.insert(make_pair(415, "415 Unsupported Media Type"));
     status.insert(make_pair(500, "500 Internal Server Error"));
+    status.insert(make_pair(505, "505 HTTP Version Not Supported"));
     //Add more later if needed if missing will return empty str
     return status[error];
 }

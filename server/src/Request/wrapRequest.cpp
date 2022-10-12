@@ -2,6 +2,8 @@
 
 #include <sys/time.h>
 
+#include <iostream>
+
 using namespace std;
 
 static size_t getTime(){
@@ -15,7 +17,10 @@ wrapRequest::wrapRequest()
 
 wrapRequest& wrapRequest::operator=(Request* req) {
     delete request;
-    request = req;
+    if (request != req)
+        request = req;
+    else
+        request = NULL;
     if (request != NULL)
         last_request = getTime();
     return *this;
@@ -34,6 +39,10 @@ Request& wrapRequest::operator*(){
 }
 
 Request* wrapRequest::operator->(){
+    return request;
+}
+
+Request* wrapRequest::req(){
     return request;
 }
 

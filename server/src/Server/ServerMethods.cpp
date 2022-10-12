@@ -29,9 +29,8 @@ int Server::mget(Request &request, const string& path) const {
         return serveError(request, 500);
     stringstream ss;
     ss << file.rdbuf();
-    string str(ss.str());
-    sendResponse(request.fd(), "200 OK", getType(path), str);
-    request.setStatus(COMPLETED);
+    request.generateResponse("200 OK", getType(path), ss.str());
+    request.sendResponse();
     return 0;
 }
 
@@ -39,7 +38,10 @@ int Server::mpost(Request& request, const string& path) const {
     const set<string>& types = request.types();
     if (types.find("application/x-www-form-urlencoded") != types.end()){
         request.setStatus(COMPLETED);
-        return 0; //Not inplemented
+#ifdef DEBUG
+        cout << "NOT IMPLEMENTED" << endl;
+#endif
+        return 0;
     }
     else if (types.find("multipart/form-data") != types.end())
         return multipartUploader(request, path);
@@ -62,10 +64,11 @@ int Server::mdelete(Request& request, const string& path) const {
     if (isDirectory(path))
         return serveError(request, 403);
     if (remove(path.data()) != 0){
-        sendResponse(request.fd(), "204 No Content", "text/html", "No content");
+        request.generateResponse("204 No Content", "text/html", "No content");
+        request.sendResponse();
         return 0;
     }
-    sendResponse(request.fd(), "200 OK", "text/html", "File deleted");
-    request.setStatus(COMPLETED);
+    request.generateResponse("200 OK", "text/html", "File deleted");
+    request.sendResponse();
     return 0;
 }

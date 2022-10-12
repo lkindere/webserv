@@ -17,6 +17,7 @@ public:
     Request& operator*();
     Request* operator->();
 
+    Request* req();
     bool timeout(unsigned int timeout_limit);
     
     ~wrapRequest();

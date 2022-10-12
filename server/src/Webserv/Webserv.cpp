@@ -1,37 +1,17 @@
-#include "Webserv.hpp"
 
 #include <unistd.h>
-#include <cstring>  //memset cuz linux doesn't like the same initializers
-#include <algorithm>//std::find linux
+#include <cstring> //memset
 #include <set>
 #include <sstream>
 
-#include <iostream>
+// #ifdef DEBUG
+    #include <iostream>
+// #endif
+
+#include "Webserv.hpp"
+#include "uServer.hpp"
 
 using namespace std;
-
-//HELPERS
-
-/**
- * @brief Returns a IP:port pair from socket fd
- * @param sock_fd 
- * @return std::pair< std::string, short > 
- */
-std::pair< std::string, short > getHost(int sock_fd) {
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    socklen_t alen = sizeof(addr);
-    getsockname(sock_fd, ( sockaddr * ) &addr, &alen);
-    uint32_t ip = ntohl(addr.sin_addr.s_addr);
-    std::stringstream ss;
-    ss << ((ip >> 24) & 0xFF) << '.'
-       << ((ip >> 16) & 0xFF) << '.'
-       << ((ip >> 8) & 0xFF) << '.'
-       << (ip & 0xFF);
-    return std::make_pair(ss.str(), ntohs(addr.sin_port));
-}
-
-//WEBSERV
 
 /**
  * @brief Contructs Webserv and all needed sockets + servers
@@ -42,23 +22,26 @@ Webserv::Webserv(const ConfigData &conf) : _global(conf.global) {
     for (vector< ServerConfig >::const_iterator srv = conf.servers.begin();
          srv != conf.servers.end(); ++srv) {
         _servers.push_back(Server(&_global, *srv));
-        if (socks.insert(make_pair(srv->host, srv->port)).second == true) {
+        if (socks.insert(make_pair(srv->host, srv->port)).second == true){
             _sockets.push_back(Socket(srv->host, srv->port));
-            cout << "Socket: " << srv->host << ":" << srv->port << std::endl;
+            cout << "Listening on: " << srv->host << ':' << srv->port << endl;
         }
     }
 }
 
 /**
- * @brief Initializes all sockets, pushes back to _connections
+ * @brief Initializes all sockets, pushes back STDIN + base sockets to _connections
  * @return int 0 on success 1 on error
  */
 int Webserv::init() {
+    pollfd pfd;
+    pfd.fd = STDIN_FILENO;
+    pfd.events = POLLIN;
+    _connections.push_back(pfd);
     for (size_t i = 0; i < _sockets.size(); ++i) {
         int ret = _sockets[i].init();
         if (ret != 0)
             return ret;
-        pollfd pfd;
         pfd.fd = _sockets[i].fd();
         pfd.events = POLLIN;
         _connections.push_back(pfd);
@@ -72,7 +55,7 @@ int Webserv::init() {
  */
 int Webserv::accept() {
     for (size_t i = 0; i < _sockets.size(); ++i){
-        const short& revents = _connections[i].revents;
+        const short& revents = _connections[i + 1].revents;
         if (revents & POLLIN){
             int ret = _sockets[i].socket_accept();
             if (ret == -1)
@@ -88,30 +71,52 @@ int Webserv::accept() {
     return 0;
 }
 
+/**
+ * @brief Handles terminal 
+ * 
+ * @param fd 
+ */
+void Webserv::terminalHandler(int fd){
+    cout << "FD: " << fd << std::endl;
+    string buffer(255, 0);
+    size_t bytes_read = read(fd, (void*)buffer.data(), 255);
+    buffer.resize(bytes_read);
+    if (buffer == "exit\n" || buffer == "EXIT\n"){
+        terminate();
+        exit(0);
+    }
+    if (buffer == "ls" || buffer == "LS"){
+
+    }
+}
+
 int Webserv::readwrite() {
-    if (_sockets.size() > _connections.size())
+    if (_sockets.size() + 1 > _connections.size())
         throw("FATAL ERROR: LESS CONNECTIONS THAN SOCKETS");
-    for (vector< pollfd >::iterator it = _connections.begin() + _sockets.size();
+    if (_connections[0].revents & POLLIN)
+        terminalHandler(_connections[0].fd);
+    for (vector< pollfd >::iterator it = _connections.begin() + _sockets.size() + 1;
         it != _connections.end(); ++it) {
         if (checkclose(*it) == 1)
             continue;
         wrapRequest& request = _requests[it->fd];
         if (it->revents & POLLIN){
-            if (request == NULL){
-                cout << "\nREQUEST IS NULL, READING TO NEW\n";
+            if (request == NULL)
                 request = new Request(it->fd, _global.client_max_body_size);
-            }
-            else {
-                cout << "\nREQUEST NOT NULL, READING TO SAME\n";
+            else
                 request->readMessage();
-            }
-            if (request->status() == WRITING) 
+            if (request->status() == POSTING || request->status() == RESPONDING) 
                 it->events = POLLOUT;
         }
         else if (it->revents & POLLOUT && request != NULL){
-            if (serve(*request) != 0)
-                return -1;
-            it->events = POLLIN;
+            if (request->status() == POSTING){
+                if (serve(*request) != 0)
+                    return -1;
+            }
+            else if (request->status() == RESPONDING)
+                request->sendResponse();
+            if (request->status() == COMPLETED || request->status() == READING)
+                it->events = POLLIN;
         }
     }
     return 0;
@@ -130,7 +135,6 @@ int Webserv::checkclose(pollfd& pfd){
         shutdown(pfd.fd, SHUT_RDWR);
         close(pfd.fd);
         pfd.fd = -1;
-        cout << "REQUEST HUP\n";
         return 1;
     }
     return 0;
@@ -142,15 +146,13 @@ int Webserv::checkclose(pollfd& pfd){
  */
 int Webserv::process() {
     int ret = poll(_connections.data(), _connections.size(), TIMEOUT * 1000);
-    cout << "POLL RET: " << ret << std::endl;
+    cout << "POLL RET: " << ret << endl;
     if (ret < 0)
         return error();
     if (ret == 0)
         return rebuild();
-    // cout << "Accepting\n";
     if (accept() != 0)
         return -1;
-    // cout << "Readwriting\n";
     if (readwrite() != 0)
         return -1;
     return rebuild();
@@ -163,12 +165,11 @@ int Webserv::process() {
 int Webserv::rebuild() {
     for (map<int, wrapRequest>::iterator rit = _requests.begin();
         rit != _requests.end(); ++rit){
-        if (rit->second != NULL && rit->second->status() == COMPLETED){
-            cout << "STATUS COMPLETED, SETTING NULL\n";
+        if (rit->second != NULL && rit->second->status() == COMPLETED)
             rit->second = NULL;
-        }
     }
-    vector<pollfd>::iterator cit(_connections.begin() + _sockets.size());
+    cout << "NEXT\n";
+    vector<pollfd>::iterator cit(_connections.begin() + _sockets.size() + 1);
     while (cit != _connections.end()){
         if (cit->fd != -1){
             map<int, wrapRequest>::iterator rit = _requests.find(cit->fd);
@@ -177,18 +178,17 @@ int Webserv::rebuild() {
                 shutdown(cit->fd, SHUT_RDWR);
                 close(cit->fd);
                 cit->fd = -1;
-                cout << "REQUEST TIMEOUT\n";
             }
         }
-        if (cit->fd == -1){
+        if (cit->fd == -1)
             cit = _connections.erase(cit);
-            cout << "CONNECTION ERASED\n";
-        }
         else
             ++cit;
     }
+#ifdef DEBUG
     cout << "\nConnections size: " << _connections.size() << '\n';
     cout << "Requests size:    " << _requests.size() << "\n\n";
+#endif
     return 0;
 }
 
@@ -199,11 +199,9 @@ int Webserv::rebuild() {
  */
 int Webserv::serve(Request& request) {
     const Server *server(getServer(request));
-    if (server == NULL){
+    if (server == NULL)
         throw("SHOULDN'T HAPPEN");
-        return -1;
-    }
-    server->serve(request);
+    return server->serve(request);
     return 0;
 }
 
@@ -228,4 +226,16 @@ const Server *Webserv::getServer(Request &request) {
     if (first == NULL)
         throw("THIS SHOULD NOT HAPPEN, SMTH SMTH ERROR");
     return first;
+}
+
+void Webserv::terminate() {
+    cout << "TERMINATING\n";
+    for (size_t i = 1; i < _connections.size(); ++i){
+        shutdown(_connections[i].fd, O_RDWR);
+        close(_connections[i].fd);
+    }
+}
+
+Webserv::~Webserv() {
+    terminate();
 }

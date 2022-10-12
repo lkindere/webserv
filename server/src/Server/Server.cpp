@@ -9,6 +9,7 @@
 #endif
 
 #include "Server.hpp"
+#include "uServer.hpp"
 #include "Types.hpp"
 
 using namespace std;
@@ -26,18 +27,12 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
  * @return int 0 on success
  */
 int Server::serve(Request &request) const {
-#ifdef DEBUG
-    cout << "Server   " << host() << ':' << port() << " received request\n";
-    cout << "Request: " << request.host() << ' ' << request.uri() << '\n';
-#endif
     if (request.method() == INVALID)
         return serveError(request, request.error());
     const Location *location(getLocation(request.uri()));
     if (location == NULL)
         return serveRoot(request);
     return serveLocation(request, *location);
-
-    //ADD REDIRECTION
 }
 
 /**
@@ -46,13 +41,7 @@ int Server::serve(Request &request) const {
  * @return int 0 on success
  */
 int Server::serveRoot(Request &request) const {
-    cout << "Serving root\n";
     string path("." + root() + request.uri());
-#ifdef DEBUG
-    cout << "Checking path: " << path << std::endl;
-    cout << "Access: " << access(path.data(), R_OK) << std::endl;
-    cout << "Is directory: " << isDirectory(path) << std::endl;
-#endif
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
@@ -61,7 +50,6 @@ int Server::serveRoot(Request &request) const {
         return mpost(request, path);
     return 0;
 }
-
 
 /**
  * @brief Serves from server location
@@ -117,7 +105,8 @@ int Server::serveDirectory(Request &request, const Location &location) const {
 int Server::serveRedirect(Request& request, const Location& location) const {
     vector<string> headers;
     headers.push_back("Location: " + location.redirect());
-    sendResponse(request.fd(), "301 Moved Permanently", "text/html", string(), headers);
+    request.generateResponse("301 Moved Permanently", "text/html", string(), headers);
+    request.sendResponse();
     return 0;
 }
 
@@ -137,15 +126,14 @@ int Server::serveAutoindex(Request& request, const string& path) const {
     ss << "<h1>Index " << request.uri() << "\n\n\n\n</h1>";
     for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)){
         string filename(ent->d_name);
-        if (filename != "." && filename != "..")
+        if (filename.size() > 0 && filename[0] != '.')
             ss << "<p><a href=\"/" << filename << "\">" << filename << "</a></p>";
     }
     ss << "</body></html>";
-    sendResponse(request.fd(), "200 OK", "text/html", ss.str());
-    request.setStatus(COMPLETED);
+    request.generateResponse("200 OK", "text/html", ss.str());
+    request.sendResponse();
     return 0;
 }
-
 
 /**
  * @brief Serves an error page
@@ -156,7 +144,7 @@ int Server::serveAutoindex(Request& request, const string& path) const {
 int Server::serveError(Request &request, short error) const {
     string status(getStatus(error));
     if (errorRoot().size() == 0)
-        serveDefaultError(request, status);
+        return serveDefaultError(request, status);
     map< short, string >::const_iterator it(errorPages().find(error));
     if (it == errorPages().end())
         return serveDefaultError(request, status);
@@ -168,9 +156,8 @@ int Server::serveError(Request &request, short error) const {
         return serveDefaultError(request, status);
     stringstream ss;
     ss << file.rdbuf();
-    string str(ss.str());
-    sendResponse(request.fd(), status, "text/html", str);
-    request.setStatus(COMPLETED);
+    request.generateResponse(status, "text/html", ss.str());
+    request.sendResponse();
     return 0;
 }
 
@@ -185,7 +172,7 @@ int Server::serveDefaultError(Request &request, const string &status) const {
     string msg("<!DOCTYPE html><html><head><title>");
     msg += status + "</title></head><body><h1>";
     msg += status + "</h1></body></html>";
-    sendResponse(request.fd(), status, "text/html", msg);
-    request.setStatus(COMPLETED);
+    request.generateResponse(status, "text/html", msg);
+    request.sendResponse();
 	return 0;
 }

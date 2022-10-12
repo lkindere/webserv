@@ -14,6 +14,7 @@ int error();
 class Socket {
 public:
     Socket(const std::string &host, int port);
+    ~Socket();
 
     int init();
     int socket_accept();

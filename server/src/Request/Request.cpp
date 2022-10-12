@@ -4,28 +4,26 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 #include "Request.hpp"
 #include "uString.hpp"
 
 using namespace std;
 
-// Constructor runs all the other bs
-// Reads request splits lines by CRLF to lines deque
-// Each further call to parseSomething modifies &lines removing line by line
 Request::Request(int fd, size_t max_size)
     : _fd(fd) {
     _status.status = READING;
     _status.max_size = max_size;
     _content.contentlength = 0;
     _content.readlength = 0;
-    _content.writtenlength = 0;
+    _content.postedlength = 0;
+    _content.sentlength = 0;
+    _content.responselength = 0;
     init();
-    cout << "REQ CREATED\n";
 }
 
 void Request::setError(int error){
-    cout << "REQUEST ERROR SETTING COMPLETED\n";
     _info.method = INVALID;
     _status.error = error;
     _status.status = COMPLETED;
@@ -38,9 +36,9 @@ void Request::init() {
         return setError(400);
     parseStart(lines);
     if (_info.method == INVALID)
-        return setError(400);
+        return;
     parseHeaders(lines);
-    _status.status = WRITING;
+    _status.status = POSTING;
 #ifdef DEBUG
     cout << "\nMethod: " << toSmethod(_info.method) << '\n';
     cout << "URI: " << _info.uri << '\n';
@@ -79,19 +77,6 @@ deque< string > Request::readRequest() {
     return split(buffer.substr(0, msgstart), "\r\n", true);
 }
 
-void Request::readMessage() {
-    _content.message.resize(BUFFER_SIZE);
-    ssize_t bytes_read = read(_fd, ( void * ) _content.message.data(), BUFFER_SIZE);
-    cout << "Bytes read: " << bytes_read;
-    if (bytes_read < 0)
-        return;
-    _content.message.resize(bytes_read);
-    _content.readlength += bytes_read;
-    _status.status = WRITING;
-// #ifdef DEBUG
-//     cout << "\nRead message:\n" << _content.message << "\n\n";
-// #endif 
-}
 
 // Splits first line of request to method/URI/protocol
 void Request::parseStart(deque< string > &lines) {
@@ -99,8 +84,14 @@ void Request::parseStart(deque< string > &lines) {
     if (firstline.size() != 3)
         return setError(400);
     _info.method = toEmethod(firstline[0]);
+    if (_info.method == INVALID)
+        return setError(405);
     _info.uri = firstline[1];
+    if (_info.uri.length() > 255)
+        return setError(414);
     _info.protocol = firstline[2];
+    if (_info.protocol != "HTTP/1.1")
+        return setError(505);
     lines.pop_front();
 }
 
@@ -114,13 +105,13 @@ void Request::parseHeaders(deque< string > &lines) {
         _content.headers.push_back(lines.front());
         if (current[0] == "Host")
             _info.host = split(current[1], ":")[0];
-        if (current[0] == "Content-Length"){
+        else if (current[0] == "Content-Length"){
             _content.contentlength = atoll(current[1].data());
             if (_content.contentlength > _status.max_size)
                 return setError(413);
             haslength = true;
         }
-        if (current[0] == "Content-Type"){
+        else if (current[0] == "Content-Type"){
             deque< string > segment = split(current[1], ";", true);
             for (size_t i = 0; i < segment.size(); ++i){
                 string::iterator it(remove(segment[i].begin(), segment[i].end(), ' '));
@@ -132,8 +123,66 @@ void Request::parseHeaders(deque< string > &lines) {
                     _content.types.insert(segment[i]);
             }
         }
+        else if (current[0] == "Transfer-Encoding"){        //UNTESTED
+            deque< string > segment = split(current[1], ",", true);
+            for (size_t i = 0; i < segment.size(); ++i){
+                string::iterator it(remove(segment[i].begin(), segment[i].end(), ' '));
+                if (it != segment[i].end())
+                    segment[i].erase(it);
+                _content.encodings.push_back(segment[i]);
+            }
+        }
         lines.pop_front();
     }
-    if (_info.method == POST && haslength == false) // && !CHUNKED later
+    cout << "\n\nINFO HOST: " << _info.host << "\n\n";
+    cout << "INFO HOST LEN: " << _info.host.length() << std::endl;
+    if (_info.host.length() == 0)
+        return setError(400);
+    for (size_t i = 0; i < _content.encodings.size(); ++i)
+        if (_content.encodings[i] != "chunked")
+            return setError(415);
+    if (_info.method == POST && haslength == false && _content.encodings.size() == 0)
         return setError(411);
+}
+
+void Request::readMessage() {
+    _content.message.resize(BUFFER_SIZE);
+    ssize_t bytes_read = read(_fd, ( void * ) _content.message.data(), BUFFER_SIZE);
+    cout << "Bytes read: " << bytes_read;
+    if (bytes_read < 0)
+        return;
+    _content.message.resize(bytes_read);
+    _content.readlength += bytes_read;
+    _status.status = POSTING;
+// #ifdef DEBUG
+//     cout << "\nRead message:\n" << _content.message << "\n\n";
+// #endif 
+}
+
+void Request::sendResponse() {
+    cout << "SENT RESPONSE\n";
+    size_t bytes_wrote = write(_fd, _response.data(), _response.length());
+    if (bytes_wrote <= 0)
+        return;
+    _content.sentlength += bytes_wrote;
+    if (_content.sentlength < _content.responselength)
+        _response = _response.substr(bytes_wrote);
+    else {
+        cout << "COMPLETED RESPONSE\n";
+        _status.status = COMPLETED;
+    }
+}
+
+void Request::generateResponse(const string &status, const string &type, const string& message, const vector<string>& headers) {
+    cout << "GENERATED RESPONSE\n";
+    stringstream ss;
+    ss << "HTTP/1.1" << ' ' << status << "\r\n"
+       << "Content-Type: " << type << "\r\n"
+       << "Content-Length: " << message.length() << "\r\n";
+    for (size_t i = 0; i < headers.size(); ++i)
+        ss << headers[i] << "\r\n";
+    ss << "\r\n" << message;
+    _response = ss.str();
+    _content.responselength = _response.length();
+    _status.status = RESPONDING;
 }

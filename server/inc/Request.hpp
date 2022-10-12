@@ -11,7 +11,8 @@
 enum e_rstat
 {
     READING,
-    WRITING,
+    POSTING,
+    RESPONDING,
     COMPLETED
 };
 
@@ -34,9 +35,12 @@ struct reqContent
 {
     size_t contentlength;
     size_t readlength;
-    size_t writtenlength;
+    size_t postedlength;
+    size_t sentlength;
+    size_t responselength;
     std::string boundary;
     std::set< std::string> types;
+    std::vector<std::string> encodings;
     std::string message;
     std::deque< std::string > headers;
 };
@@ -58,14 +62,20 @@ public:
 
     size_t              contentlength() const { return _content.contentlength; }
     size_t              readlength() const { return _content.readlength; }
-    size_t              writtenlength() const { return _content.writtenlength; }
+    size_t              postedlength() const { return _content.postedlength; }
+    size_t              sentlength() const { return _content.sentlength; }
+    size_t              responselength() const { return _content.responselength; }
     const std::string&  boundary() const { return _content.boundary; }
     const std::string&  message() const { return _content.message; }
     const std::set< std::string > &types() const { return _content.types; }
     const std::deque< std::string> &headers() { return _content.headers; }
 
-    void                setWritten(size_t len) { _content.writtenlength = len; }
+    void                setPosted(size_t len) { _content.postedlength = len; }
+
     void                readMessage();
+    void                sendResponse();
+    void                generateResponse(const std::string &status, const std::string &type, 
+        const std::string& message, const std::vector<std::string>& headers = std::vector<std::string>());
 
 private:
     void init();
@@ -80,4 +90,5 @@ private:
     reqStatus   _status;
     reqInfo     _info;
     reqContent  _content;
+    std::string _response;
 };

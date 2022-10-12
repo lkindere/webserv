@@ -5,6 +5,7 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
+
 class Location {
 public:
     Location(const LocationConfig &conf)
@@ -68,7 +69,5 @@ private:
 };
 
 //ServerMisc
-ssize_t     sendResponse(int fd, const std::string &status, const std::string &type,
-    const std::string &message, const std::vector<std::string>& headers = std::vector<std::string>());
 std::string generateLocationURI(const std::string &root, const std::string &location, const std::string &request);
 int         isDirectory(const std::string &path);
