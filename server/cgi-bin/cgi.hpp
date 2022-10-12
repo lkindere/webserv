@@ -10,9 +10,10 @@ class cgi {
 		cgi(Request &request);
 		~cgi();
 
-		std::string execute();
+		std::string execute(std::string cgiPath);
 		void getCgiEnv(Request &request);
 	private:
 		std::map<std::string, std::string> _env;
+        std::string                        _output;
 };
 #endif
