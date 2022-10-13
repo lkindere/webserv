@@ -29,12 +29,11 @@ all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(BIN)
 	
 
 compile_cgis:
-	@printf "$(shell tput setaf 2)Compiling CGI's$(shell tput sgr0)\n"
-	@$(MAKE) -C $(CGI_SRCS_DIR)
+	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
 
-$(CONFIG_PARSER_LIB):
+$(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f)
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
-	@$(MAKE) -C $(dir $@)
+	@$(MAKE) --no-print-directory -C $(dir $@)
 
 $(UTILS_LIB):
 	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
