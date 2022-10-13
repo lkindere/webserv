@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <sstream>
+#include <cstring>
 
 #include "uServer.hpp"
 

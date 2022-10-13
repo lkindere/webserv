@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sstream>
+#include <algorithm>
 
 // #ifdef DEBUG
     #include <iostream>
@@ -17,7 +18,7 @@ using namespace std;
  * @return int 1 on match 0 if no match
  */
 int Server::checkNames(const string &name) const {
-    if (find(_config.server_names.begin(), _config.server_names.end(), name)
+    if (find(_config.server_names.begin(), _config.server_names.end(), name.c_str())
         != _config.server_names.end())
         return 1;
     return 0;
