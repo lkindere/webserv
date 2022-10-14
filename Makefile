@@ -6,7 +6,7 @@ all: $(NAME)
 run: all
 	./webserv configs/basic.conf
 
-$(NAME): $(shell find $(SERVER_DIR)/ -type f -name *.cpp)
+$(NAME): $(shell find $(SERVER_DIR)/ -type f -name '*.cpp')
 	@$(MAKE) -C $(SERVER_DIR) all
 	@cp $(SERVER_DIR)/$(NAME) $(NAME)
 
