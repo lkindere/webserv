@@ -1,25 +1,33 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR)
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC)
 
-BIN = hello.cgi
+LIB = librequest.a
 SRCDIR = ./src
 BUILDDIR = ./build
 OBJDIR = $(BUILDDIR)/obj
-INCDIR = $(SRCDIR)/inc/
+INCDIR = ./inc/
 EXTENSION = .cpp
+
+UTILS_DIR = ../utils
+UTILS_LIB = $(UTILS_DIR)/librequest.a
+UTILS_INC = $(UTILS_DIR)/inc/
 
 SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
 OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
 DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 
-.NOTPARALLEL:
+all: $(UTILS_LIB) $(LIB)
+	
+$(UTILS_LIB):
+	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
 
-all: $(BIN)
-
-
-$(BIN): $(OBJECTS)
-	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
-	@$(CXX) $(CXXFLAGS) $^ -o $@
+$(LIB): $(OBJECTS)
+	@mkdir -p $(dir $(LIB))
+	@printf "$(shell tput setaf 2)Compiling [$(LIB)]$(shell tput sgr0)\n"
+	@ar -r $(LIB) $(OBJECTS)
+	@mkdir -p ../server/libs/
+	@cp $(LIB) ../server/libs/$(notdir $(LIB))
 
 -include $(DEPENDS)
 
@@ -39,16 +47,13 @@ clean:
 
 .PHONY: fclean
 fclean: clean
-	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
-	@$(RM) $(BIN)
+	@printf "$(shell tput setaf 1)Removing $(LIB)$(shell tput sgr0)\n"
+	@$(RM) $(LIB)
 
 .PHONY: re
-re: fclean all
+re: fclean all	
 
+.PHONY: get_lib_name
+get_lib_name:
+	@echo $(LIB)
 
-.PHONY: run
-run: all
-	./$(BIN)
-
-get_bin:
-	@echo $(CURDIR)/$(BIN)

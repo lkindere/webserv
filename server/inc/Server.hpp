@@ -18,6 +18,7 @@ public:
     const std::string &redirect() const { return _config.redirect; }
     const std::string &uploads() const { return _config.uploads; }
     const std::vector< e_method > &methods() const { return _config.methods; }
+    const std::vector<std::string>& cgi_extensions() const { return _config.cgi_extensions; }
 
     //Cgi extension getter/checker
 private:
@@ -37,6 +38,7 @@ private:
     int serveDirectory(Request &request, const Location &location) const;
     int serveRedirect(Request& request, const Location& location) const;
     int serveAutoindex(Request& request, const std::string& path) const;
+    int serveCGI(Request& request, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
 
@@ -67,7 +69,3 @@ private:
     ServerConfig _config;
     std::vector< Location > _locations;
 };
-
-//ServerMisc
-std::string generateLocationURI(const std::string &root, const std::string &location, const std::string &request);
-int         isDirectory(const std::string &path);

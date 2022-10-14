@@ -4,7 +4,7 @@
 #include <deque>
 #include <string>
 
-#include "Config.hpp"
+#include "uMethod.hpp"
 
 #define BUFFER_SIZE 65536
 

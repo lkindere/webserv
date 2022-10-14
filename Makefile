@@ -20,4 +20,7 @@ fclean:
 
 re: fclean all
 
-.PHONY: clean, fclean, re
+get_cgi_bin_dir:
+	@echo $(CURDIR)/cgi-bin
+
+.PHONY: clean, fclean, re, get_cgi_bin_dir

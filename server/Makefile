@@ -1,8 +1,8 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -g3 -DDEBUG
-LDFLAGS = -L./libs -lconfigparser -lutils
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -I $(REQUEST_INC) -I $(CGI_INC)  -g3 -DDEBUG
+LDFLAGS = -L./libs -lconfigparser -lutils -lrequest -lcgi
 
-CGI_SRCS_DIR = ../cgi
+# CGI_SRCS_DIR = ../cgi
 
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
@@ -11,6 +11,14 @@ CONFIG_PARSER_INC = $(CONFIG_PARSER_DIR)/inc/
 UTILS_DIR = ../utils
 UTILS_LIB = $(UTILS_DIR)/libutils.a
 UTILS_INC = $(UTILS_DIR)/inc/
+
+REQUEST_DIR = ../request
+REQUEST_LIB = $(REQUEST_DIR)/librequest.a
+REQUEST_INC = $(REQUEST_DIR)/inc/
+
+CGI_DIR = ../cgi
+CGI_LIB = $(CGI_DIR)/libcgi.a
+CGI_INC = $(CGI_DIR)/inc/
 
 BIN = webserv
 SRCDIR = ./src
@@ -25,11 +33,11 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
-all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(BIN)
+all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(CGI_LIB) $(BIN)
 	
 
 compile_cgis:
-	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
+# 	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
 
 $(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
@@ -37,6 +45,14 @@ $(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f -name '*.cpp')
 
 $(UTILS_LIB):
 	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
+
+$(REQUEST_LIB):
+	@printf "$(shell tput setaf 2)Compiling Request Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
+
+$(CGI_LIB):
+	@printf "$(shell tput setaf 2)Compiling CGI Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
 $(BIN): $(OBJECTS)
@@ -55,29 +71,28 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
 
 .PHONY: clean
 clean:
-	@$(MAKE) -C $(CGI_SRCS_DIR) clean
+# @$(MAKE) -C $(CGI_SRCS_DIR) clean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
 	@$(MAKE) -C $(dir $(UTILS_LIB)) clean
+	@$(MAKE) -C $(dir $(REQUEST_LIB)) clean
+	@$(MAKE) -C $(dir $(CGI_LIB)) clean
 	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
 	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
 	@$(RM) -r $(BUILDDIR)
 
 .PHONY: fclean
 fclean: clean
-	@$(MAKE) -C $(CGI_SRCS_DIR) fclean
+# @$(MAKE) -C $(CGI_SRCS_DIR) fclean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
 	@$(MAKE) -C $(dir $(UTILS_LIB)) fclean
+	@$(MAKE) -C $(dir $(REQUEST_LIB)) fclean
+	@$(MAKE) -C $(dir $(CGI_LIB)) fclean
 	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
 	@$(RM) $(BIN)
 
 .PHONY: re
 re: fclean all	
 
-
 .PHONY: run
 run: all
 	./$(BIN) ../configs/basic.conf
-
-
-get_cgi_bin_dir:
-	@echo $(CURDIR)/cgi-bin
