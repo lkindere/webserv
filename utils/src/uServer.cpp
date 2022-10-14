@@ -1,12 +1,52 @@
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <sstream>
 #include <cstring>
+#include <algorithm>
 
 #include "uServer.hpp"
 
 using namespace std;
+
+/**
+ * @brief Returns 1 if path.extension matches cgi extensions
+ * @param cgi_extensions 
+ * @param path 
+ * @return int 1 on true 0 on false
+ */
+int isCGI(const vector<string>& cgi_extensions, const string& path){
+    size_t i = path.rfind('.');
+    if (i == path.npos)
+        return 0;
+    if (find(cgi_extensions.begin(), cgi_extensions.end(), path.substr(i))
+        != cgi_extensions.end())
+        return 1;
+    return 0;
+}
+
+/**
+ * @brief Checks if path is a directory
+ * @param path 
+ * @return int 1 on directory 0 if not
+ */
+int isDirectory(const string &path) {
+    struct stat sb;
+    stat(path.data(), &sb);
+    return (S_ISDIR(sb.st_mode));
+}
+
+/**
+ * @brief Returns current working dir
+ * @return string 
+ */
+string getCWD() {
+    char* cwd = getcwd(NULL, 0);
+    string ret(cwd);
+    free(cwd);
+    return ret;
+}
 
 /**
  * @brief Returns a IP:port pair from socket fd
@@ -28,17 +68,6 @@ pair< string, short > getHost(int sock_fd) {
 }
 
 /**
- * @brief Checks if path is a directory
- * @param path 
- * @return int 1 on directory 0 if not
- */
-int isDirectory(const string &path) {
-    struct stat sb;
-    stat(path.data(), &sb);
-    return (S_ISDIR(sb.st_mode));
-}
-
-/**
  * @brief Generates new URI on matching location
  * @param root location root
  * @param location location uri
@@ -52,5 +81,7 @@ string generateLocationURI(const string &root, const string &location, const str
     string req(request.substr(i));
     if (req.size() == 0)
         req = "/";
-    return string("." + root + req);
+    if (req[0] != '/')
+        req = "/" + req;
+    return string(getCWD() + root + req);
 }

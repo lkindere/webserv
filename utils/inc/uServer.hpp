@@ -1,9 +1,13 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <utility>
 
-std::pair< std::string, short > getHost(int sock_fd);
+
+int         isCGI(const std::vector<std::string>& cgi_extensions, const std::string& path);
 int         isDirectory(const std::string &path);
+std::string                     getCWD();
+std::pair< std::string, short > getHost(int sock_fd);
 std::string generateLocationURI(const std::string &root,
     const std::string &location, const std::string &request);

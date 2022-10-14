@@ -11,6 +11,7 @@
 #include "Server.hpp"
 #include "uServer.hpp"
 #include "Types.hpp"
+#include "cgi.hpp"
 
 using namespace std;
 
@@ -41,7 +42,7 @@ int Server::serve(Request &request) const {
  * @return int 0 on success
  */
 int Server::serveRoot(Request &request) const {
-    string path("." + root() + request.uri());
+    string path(getCWD() + root() + request.uri());
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
@@ -59,18 +60,40 @@ int Server::serveRoot(Request &request) const {
  */
 int Server::serveLocation(Request &request, const Location &location) const {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
+    cout << "Generated PATH: " << path << endl;
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
     if (location.redirect().length() != 0)
         return serveRedirect(request, location);
     if (isDirectory(path))
         return serveDirectory(request, location);
+    if (isCGI(location.cgi_extensions(), path))
+        return serveCGI(request, path);
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
         return mdelete(request, path);
     if (request.method() == POST)
         return mpost(request, path);
+    return 0;
+}
+
+/**
+ * @brief Will serve CGI
+ * @param request 
+ * @param path 
+ * @return int 
+ */
+int Server::serveCGI(Request& request, const string& path) const {
+    if (access(path.data(), F_OK) != 0)
+        return serveError(request, 404);
+    if (access(path.data(), X_OK) != 0)
+        return serveError(request, 403);
+    cgi lol(request);
+    string output = lol.execute(path);
+    cout << "CGI OUTPUT:\n" << output << endl;
+    request.generateResponse("200 OK", "text/html", output);
+    request.sendResponse();
     return 0;
 }
 

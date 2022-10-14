@@ -28,20 +28,21 @@ deque< string > split(const string &str, const string &delim, bool noempty) {
 }
 
 /**
- * @brief Count number of equal strings from the start to the end
- * @param path deque<str>
- * @param uri deque<str>
- * @return size_t number of matches or (size_t)-1 on perfect match (all strings match)
+ * @brief Count number of equal strings from the start to the end, everything past last match is mismatch
+ * @param d1 deque<str>
+ * @param d2 deque<str>
+ * @return pair<matches, mismatches>
  */
-size_t getMatches(deque< string > &path, deque< string > &uri) {
+pair<size_t, size_t> getMatches(deque< string > &d1, deque< string > &d2) {
     size_t matches = 0;
-    for (size_t i = 0; i < path.size() && i < uri.size(); ++i) {
-        if (path[i] == uri[i])
+    size_t mismatches = 0;
+    for (size_t i = 0; i < d1.size() && i < d2.size(); ++i) {
+        if (d1[i] == d2[i])
             ++matches;
-        else
-            break;
+        else {
+            mismatches = max(d1.size(), d2.size()) - (i + 1);
+            return make_pair(matches, mismatches);
+        }
     }
-    if (matches == path.size() && matches == uri.size())
-        return -1;
-    return matches;
+    return make_pair(matches, max(d1.size(), d2.size()) - min(d1.size(), d2.size()));
 }

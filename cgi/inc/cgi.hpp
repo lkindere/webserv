@@ -1,9 +1,10 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
-#include <iostream>
-#include <utility>
-#include "../inc/Request.hpp"
+#include <string>
+#include <map>
+
+class Request; //Don't need to include Request header here, can include it in the .cpp
 
 class cgi {
 	public:

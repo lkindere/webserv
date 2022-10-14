@@ -34,13 +34,12 @@ const Location *Server::getLocation(const string &uri) const {
         return NULL;
     deque< string > path(split(uri, "/", true));
     const Location *ptr = NULL;
-    size_t current = 0;
+    pair<size_t, size_t>    current(make_pair(0, (size_t)-1));
     for (size_t i = 0; i < _locations.size(); ++i) {
         deque< string > loc(split(_locations[i].uri(), "/", true));
-        size_t match = getMatches(path, loc);
-        if (match == (size_t)-1)
-            return &_locations[i];
-        if (match > current) {
+        pair<size_t, size_t> match = getMatches(path, loc);
+        if (match.first > current.first
+            || (match.first == current.first && match.second < current.second)) {
             ptr = &_locations[i];
             current = match;
         }
