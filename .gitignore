@@ -14,7 +14,7 @@
 .vscode
 
 # Ignore .cgi binarys
-*.cgi
+# *.cgi
 
 # Prerequisites
 *.d

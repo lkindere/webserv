@@ -38,7 +38,7 @@ private:
     int serveDirectory(Request &request, const Location &location) const;
     int serveRedirect(Request& request, const Location& location) const;
     int serveAutoindex(Request& request, const std::string& path) const;
-    int serveCGI(Request& request, const std::string& path) const;
+    int serveCGI(Request& request, const Location& location, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
 
@@ -55,6 +55,8 @@ public:
     //ServerMisc
     int checkNames(const std::string &name) const;
     const Location *getLocation(const std::string &uri) const;
+    std::map<std::string, std::string> generateENV(const Request& request,
+            const std::string& path) const;
 
     //Getters
     const std::string &host() const { return _config.host; }

@@ -19,7 +19,6 @@ using namespace std;
  * @return int 0 on success
  */
 int Server::mget(Request &request, const string& path) const {
-    cout << "MGET PATH: " << path << endl;
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), R_OK) != 0)

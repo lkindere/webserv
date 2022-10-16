@@ -11,7 +11,7 @@
 #include "Server.hpp"
 #include "uServer.hpp"
 #include "Types.hpp"
-#include "cgi.hpp"
+#include "Cgi.hpp"
 
 using namespace std;
 
@@ -60,7 +60,6 @@ int Server::serveRoot(Request &request) const {
  */
 int Server::serveLocation(Request &request, const Location &location) const {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
-    cout << "Generated PATH: " << path << endl;
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
     if (location.redirect().length() != 0)
@@ -68,7 +67,7 @@ int Server::serveLocation(Request &request, const Location &location) const {
     if (isDirectory(path))
         return serveDirectory(request, location);
     if (isCGI(location.cgi_extensions(), path))
-        return serveCGI(request, path);
+        return serveCGI(request, location, path);
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
@@ -84,12 +83,14 @@ int Server::serveLocation(Request &request, const Location &location) const {
  * @param path 
  * @return int 
  */
-int Server::serveCGI(Request& request, const string& path) const {
+int Server::serveCGI(Request& request, const Location& location, const string& path) const {
+    cout << "\n--SERVING CGI--\n\n";
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), X_OK) != 0)
         return serveError(request, 403);
-    cgi lol(request);
+    (void)location;
+    Cgi lol(generateENV(request, path));
     string output = lol.execute(path);
     cout << "CGI OUTPUT:\n" << output << endl;
     request.generateResponse("200 OK", "text/html", output);

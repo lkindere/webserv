@@ -1,4 +1,6 @@
 
+#include <sstream>
+
 #include "uString.hpp"
 
 using namespace std;
@@ -45,4 +47,13 @@ pair<size_t, size_t> getMatches(deque< string > &d1, deque< string > &d2) {
         }
     }
     return make_pair(matches, max(d1.size(), d2.size()) - min(d1.size(), d2.size()));
+}
+
+/**
+ * @brief long long to string
+ */
+string itostr(long long n){
+    stringstream ss;
+    ss << n;
+    return ss.str();
 }

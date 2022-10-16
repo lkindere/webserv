@@ -2,39 +2,17 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "cgi.hpp"
+#include "Cgi.hpp"
 #include "Request.hpp"
 
 using namespace std;
 
-cgi::cgi(Request &request) {
-    _env.insert(make_pair("SERVER_SOFTWARE", "webserv/1.0"));
-    _env.insert(make_pair("SERVER_NAME", "localhost/127.0.0.1"));
-    _env.insert(make_pair("GATEWAY_INTERFACE", "CGI/1.1"));
-    _env.insert(make_pair("SERVER_PROTOCOL", "HTTP/1.0"));
-    _env.insert(make_pair("REQUEST_METHOD", "port"));
-    _env.insert(make_pair("PATH_INFO", ""));
-    _env.insert(make_pair("PATH_TRANSLATED", "real path to file"));
-    // _env.insert(make_pair("SCRIPT_NAME", "cgi-bin" + programname));
-    _env.insert(make_pair("QUERY_STRING", "fullpath with vars"));
-    _env.insert(make_pair("REMOTE_HOST", request.host()));
-    _env.insert(make_pair("REMOTE_ADDR", ""));
-    _env.insert(make_pair("AUTH_TYPE", ""));
-    _env.insert(make_pair("REMOTE_USER", ""));
-    _env.insert(make_pair("REMOTE_IDENT", ""));
-    _env.insert(make_pair("CONTENT_TYPE", ""));
-    _env.insert(make_pair("CONTENT_LENGTH", request.message()));
-    _env.insert(make_pair("HTTP_ACCEPT", ""));
-    _env.insert(make_pair("HTTP_USER_AGENT", ""));
-}
+Cgi::Cgi(const map<string, string>& env) : _env(env) {}
 
-cgi::~cgi() {
-}
-
-string cgi::execute(string cgiPath) {
+string Cgi::execute(string path) {
     cout << "CGI THINGY\n";
-    char **env;
-    char **argv;
+    char **env = { NULL };
+    char **argv = { NULL };
     pid_t pid;
     int std_in = dup(STDIN_FILENO);
     int std_out = dup(STDOUT_FILENO);
@@ -57,7 +35,7 @@ string cgi::execute(string cgiPath) {
     } else if (pid == 0) {
         dup2(fdIn, STDIN_FILENO);
         dup2(fdOut, STDOUT_FILENO);
-        execve(cgiPath.c_str(), argv, env);
+        execve(path.data(), argv, env);
         cerr << "ERROR: CGI child: " << strerror(errno) << endl;
         write(STDOUT_FILENO, "Status: 500\r\n", 14);
         exit(1);

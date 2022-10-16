@@ -49,7 +49,26 @@ string getCWD() {
 }
 
 /**
- * @brief Returns a IP:port pair from socket fd
+ * @brief Returns a IP from socket fd (CLIENT)
+ * @param sock_fd 
+ * @return string 
+ */
+string getPeer(int sock_fd) {
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    socklen_t alen = sizeof(addr);
+    getpeername(sock_fd, ( sockaddr * ) &addr, &alen);
+    uint32_t ip = ntohl(addr.sin_addr.s_addr);
+    stringstream ss;
+    ss << ((ip >> 24) & 0xFF) << '.'
+       << ((ip >> 16) & 0xFF) << '.'
+       << ((ip >> 8) & 0xFF) << '.'
+       << (ip & 0xFF);
+    return ss.str();
+}
+
+/**
+ * @brief Returns a IP:port pair from socket fd (SERVER)
  * @param sock_fd 
  * @return std::pair< std::string, short > 
  */
@@ -84,4 +103,16 @@ string generateLocationURI(const string &root, const string &location, const str
     if (req[0] != '/')
         req = "/" + req;
     return string(getCWD() + root + req);
+}
+
+/**
+ * @brief Basically just cuts off the CWD part
+ * @param fullpath 
+ * @return string 
+ */
+string getScriptname(const string& fullpath) {
+    string cwd = getCWD();
+    if (fullpath.find(cwd) == fullpath.npos)
+        return fullpath;
+    return fullpath.substr(cwd.length());
 }

@@ -45,9 +45,9 @@ void Request::init() {
     cout << "Protocol: " << _info.protocol << '\n';
     cout << "Host: " << _info.host << "\n\n";
     cout << "Headers:\n";
-    for (deque< string >::const_iterator it = _content.headers.begin();
+    for (map< string, string >::const_iterator it = _content.headers.begin();
         it != _content.headers.end(); ++it)
-        cout << *it << '\n';
+        cout << it->first << " , " << it->second << '\n';
     cout << "\nContent length: " << _content.contentlength << '\n';
     cout << "Message length: " << _content.message.length() << '\n';
     cout << "Content types: ";
@@ -74,6 +74,9 @@ deque< string > Request::readRequest() {
     if (msgstart != string::npos && msgstart + 4 < buffer.size())
         _content.message = buffer.substr(msgstart + 4);
     _content.readlength += _content.message.length();
+#ifdef DEBUG
+    cout << "READ:\n" << _content.message << endl;
+#endif
     return split(buffer.substr(0, msgstart), "\r\n", true);
 }
 
@@ -86,7 +89,13 @@ void Request::parseStart(deque< string > &lines) {
     _info.method = toEmethod(firstline[0]);
     if (_info.method == INVALID)
         return setError(405);
-    _info.uri = firstline[1];
+    size_t qstart = firstline[1].find('&');
+    if (qstart != string::npos){
+        _info.query = firstline[1].substr(qstart + 1);
+        _info.uri = firstline[1].substr(0, qstart);
+    }
+    else
+        _info.uri = firstline[1];
     if (_info.uri.length() > 255)
         return setError(414);
     _info.protocol = firstline[2];
@@ -102,7 +111,7 @@ void Request::parseHeaders(deque< string > &lines) {
         deque< string > current(split(lines.front(), ": "));
         if (current.size() != 2)
             return setError(400);
-        _content.headers.push_back(lines.front());
+        addHeader(current);
         if (current[0] == "Host")
             _info.host = split(current[1], ":")[0];
         else if (current[0] == "Content-Length"){
@@ -123,7 +132,7 @@ void Request::parseHeaders(deque< string > &lines) {
                     _content.types.insert(segment[i]);
             }
         }
-        else if (current[0] == "Transfer-Encoding"){        //UNTESTED
+        else if (current[0] == "Transfer-Encoding"){
             deque< string > segment = split(current[1], ",", true);
             for (size_t i = 0; i < segment.size(); ++i){
                 string::iterator it(remove(segment[i].begin(), segment[i].end(), ' '));
@@ -143,6 +152,13 @@ void Request::parseHeaders(deque< string > &lines) {
             return setError(415);
     if (_info.method == POST && haslength == false && _content.encodings.size() == 0)
         return setError(411);
+}
+
+void Request::addHeader(const deque<string>& line) {
+    if (_content.headers[line[0]].length() == 0)
+        _content.headers[line[0]] = line[1];
+    else
+        _content.headers[line[0]].append(", " + line[1]);
 }
 
 void Request::readMessage() {
@@ -185,4 +201,11 @@ void Request::generateResponse(const string &status, const string &type, const s
     _response = ss.str();
     _content.responselength = _response.length();
     _status.status = RESPONDING;
+}
+
+string Request::getHeader(const string& header) const {
+    map<string, string>::const_iterator it = headers().find(header);
+    if (it != headers().end())
+        return it->second;
+    return string();
 }

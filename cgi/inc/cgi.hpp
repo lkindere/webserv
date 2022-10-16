@@ -1,20 +1,17 @@
-#ifndef CGI_HPP
-#define CGI_HPP
+#pragma once
 
 #include <string>
 #include <map>
 
-class Request; //Don't need to include Request header here, can include it in the .cpp
+class Request;
 
-class cgi {
+class Cgi {
 	public:
-		cgi(Request &request);
-		~cgi();
+		Cgi(const std::map< std::string, std::string >& env);
 
-		std::string execute(std::string cgiPath);
-		void getCgiEnv(Request &request);
+		std::string execute(std::string path);
+
 	private:
 		std::map<std::string, std::string> _env;
         std::string                        _output;
 };
-#endif
