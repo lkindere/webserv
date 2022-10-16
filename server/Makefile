@@ -39,7 +39,7 @@ all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(CGI_LIB) $(
 compile_cgis:
 # 	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
 
-$(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f)
+$(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
 	@$(MAKE) --no-print-directory -C $(dir $@)
 
