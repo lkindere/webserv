@@ -78,7 +78,7 @@ bool CookieDate::_isValidDay(const std::string &day) const {
         return false;
 
     const int dayAsInt = FromString< int >(day);
-    const int monthAsInt = FromString< int >(this->getMonth());
+    const int monthAsInt = this->getMonthAsNumber();
     const int yearAsInt = FromString< int >(this->getYear());
 
     const int numberOfDaysInMonthAndYear = this->_getNumberOfDaysFromMonthAndYear(monthAsInt, yearAsInt);
