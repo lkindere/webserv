@@ -45,20 +45,3 @@ size_t getMatches(deque< string > &path, deque< string > &uri) {
         return -1;
     return matches;
 }
-
-#include <sstream>
-
-template < typename T >
-std::string ToString(const T &v) {
-    std::ostringstream ss;
-    ss << v;
-    return ss.str();
-}
-
-template < typename T >
-T FromString(const std::string &str) {
-    std::istringstream ss(str);
-    T ret;
-    ss >> ret;
-    return ret;
-}
