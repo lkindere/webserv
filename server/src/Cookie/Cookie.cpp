@@ -20,7 +20,7 @@ std::string Cookie::toString() const {
     ss_result << this->_name
               << "=" << quote << this->_value << quote;
 
-    if (typeid(NonSpecifiedCookieDate) != typeid(this->_expires)) {
+    if (!this->_isNonSpecifiedCookieDate(this->_expires)) {
         ss_result << delimiter << "Expires=" << quote
                   << this->_expires.toString() << quote;
     }
@@ -50,6 +50,16 @@ std::string Cookie::toString() const {
     }
 
     return ss_result.str();
+}
+
+bool Cookie::_isNonSpecifiedCookieDate(const CookieDate &cookieDate) const {
+
+    try {
+        const CookieDate result = dynamic_cast< const NonSpecifiedCookieDate & >(cookieDate);
+    } catch (...) {
+        return true;
+    }
+    return false;
 }
 
 std::string Cookie::_sameSiteEnumToString(sameSiteEnum sameSite) const {

@@ -61,4 +61,5 @@ public:
 
 private:
     std::string _sameSiteEnumToString(sameSiteEnum sameSite) const;
+	bool _isNonSpecifiedCookieDate(const CookieDate &cookieDate) const;
 };
