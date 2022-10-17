@@ -1,6 +1,7 @@
 #include "CookieDate.hpp"
 
 #include <exception>
+#include <iostream>
 
 #include "uString.hpp"
 
