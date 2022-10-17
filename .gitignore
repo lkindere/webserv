@@ -10,8 +10,9 @@
 # Unignore Makefile
 !Makefile
 
-# Ignore .vscode
+# Ignore IDE Specific Files
 .vscode
+.idea
 
 # Ignore .cgi binarys
 *.cgi
