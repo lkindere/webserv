@@ -25,6 +25,21 @@ CookieDate::CookieDate(const std::string &dayName, const std::string &day, const
     }
 }
 
+CookieDate::CookieDate(const CookieDate &cookieDate) {
+    try {
+        this->setDayName(cookieDate.getDayName());
+        this->setYear(cookieDate.getYear());
+        this->setMonth(cookieDate.getMonth());
+        this->setDay(cookieDate.getDay());
+        this->setHour(cookieDate.getHour());
+        this->setMinute(cookieDate.getMinut());
+        this->setSecond(cookieDate.getSecond());
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << '\n';
+        throw;
+    }
+}
+
 /* Public Member Functions */
 std::string CookieDate::toString() const {
 	return "NotImplemented";
