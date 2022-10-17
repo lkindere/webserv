@@ -113,36 +113,36 @@ bool CookieDate::_isValidYear(const std::string &year) const {
 }
 
 bool CookieDate::_isValidHour(const std::string &hour) const {
-	if (hour.length() != 2)
-		return false;
+    if (hour.length() != 2)
+        return false;
 
-	const int hourAsInt = FromString< int >(hour);
-	if (hourAsInt <= 0 || hourAsInt > 24)
-		return false;
+    const int hourAsInt = FromString< int >(hour);
+    if (hourAsInt <= 0 || hourAsInt > 24)
+        return false;
 
-	return true;
+    return true;
 }
 
 bool CookieDate::_isValidMinute(const std::string &minute) const {
-	if (minute.length() != 2)
-		return false;
-	
-	const int minuteAsInt = FromString<int>(minute);
-	if (minuteAsInt < 0 || minuteAsInt >= 59)
-		return false;
-	
-	return true;
+    if (minute.length() != 2)
+        return false;
+
+    const int minuteAsInt = FromString< int >(minute);
+    if (minuteAsInt < 0 || minuteAsInt >= 59)
+        return false;
+
+    return true;
 }
 
 bool CookieDate::_isValidSecond(const std::string &second) const {
-	if (second.length() != 2)
-		return false;
-	
-	const int secondAsInt = FromString<int>(second);
-	if (secondAsInt < 0 || secondAsInt >= 59)
-		return false;
+    if (second.length() != 2)
+        return false;
 
-	return true;
+    const int secondAsInt = FromString< int >(second);
+    if (secondAsInt < 0 || secondAsInt >= 59)
+        return false;
+
+    return true;
 }
 
 /* Setter / Getter */
