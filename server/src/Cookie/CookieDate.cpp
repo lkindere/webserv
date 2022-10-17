@@ -42,7 +42,15 @@ CookieDate::CookieDate(const CookieDate &cookieDate) {
 
 /* Public Member Functions */
 std::string CookieDate::toString() const {
-	return "NotImplemented";
+
+    std::stringstream ss_result;
+
+    ss_result << this->getDayName() << ", "
+              << this->getDay() << " " << this->getMonth() << " " << this->getYear() << " "
+              << this->getHour() << ":" << this->getMinut() << ":" << this->getSecond() << " "
+              << "GMT";
+
+    return ss_result.str();
 }
 
 /* Private Member Functions */
