@@ -58,8 +58,3 @@ public:
     std::string getMinut() const { return this->_minute; }
     std::string getSecond() const { return this->_second; }
 };
-
-struct NonSpecifiedCookieDate : public CookieDate {
-public:
-	NonSpecifiedCookieDate() : CookieDate() {};
-};

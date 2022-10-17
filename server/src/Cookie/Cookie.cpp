@@ -4,7 +4,7 @@ Cookie::Cookie(const std::string &name,
                const std::string &value)
     : _name(name),
       _value(value),
-      _expires(NonSpecifiedCookieDate()),
+      _expires(NULL),
       _maxAge(_MaxAgeNotSpecified),
       _domain(""),
       _path(""),
@@ -20,9 +20,9 @@ std::string Cookie::toString() const {
     ss_result << this->_name
               << "=" << quote << this->_value << quote;
 
-    if (!this->_isNonSpecifiedCookieDate(this->_expires)) {
+    if (this->_expires != NULL) {
         ss_result << delimiter << "Expires=" << quote
-                  << this->_expires.toString() << quote;
+                  << this->_expires->toString() << quote;
     }
 
     if (this->_maxAge != _MaxAgeNotSpecified) {
@@ -52,16 +52,6 @@ std::string Cookie::toString() const {
     return ss_result.str();
 }
 
-bool Cookie::_isNonSpecifiedCookieDate(const CookieDate &cookieDate) const {
-
-    try {
-        const CookieDate result = dynamic_cast< const NonSpecifiedCookieDate & >(cookieDate);
-    } catch (...) {
-        return true;
-    }
-    return false;
-}
-
 std::string Cookie::_sameSiteEnumToString(sameSiteEnum sameSite) const {
     static const std::string enumAsString[] = {"Strict", "Lax", "None"};
 
@@ -70,3 +60,28 @@ std::string Cookie::_sameSiteEnumToString(sameSiteEnum sameSite) const {
 
     return enumAsString[sameSite];
 }
+
+/* Getter / Setter */
+
+void Cookie::setName(const std::string &name) { this->_name = name; }
+void Cookie::setValue(const std::string &value) { this->_value = value; }
+void Cookie::setExpires(const CookieDate &expires) {
+    if (this->_expires != NULL)
+        delete this->_expires;
+
+    this->_expires = new CookieDate(expires);
+}
+void Cookie::setAge(int maxAge) { this->_maxAge = maxAge; }
+void Cookie::setDomain(const std::string &domain) { this->_domain = domain; }
+void Cookie::setPath(const std::string &path) { this->_path = path; }
+void Cookie::setHttpOnly(bool httpOnly) { this->_httpOnly = httpOnly; }
+void Cookie::setSameSite(sameSiteEnum sameSite) { this->_sameSite = sameSite; }
+
+std::string Cookie::getName() const { return this->_name; }
+std::string Cookie::getValue() const { return this->_value; }
+CookieDate Cookie::getExpires() const { return *this->_expires; }
+int Cookie::getMaxAge() const { return this->_maxAge; }
+std::string Cookie::getDomain() const { return this->_domain; }
+std::string Cookie::getPath() const { return this->_path; }
+bool Cookie::getHttpOnly() const { return this->_httpOnly; }
+Cookie::sameSiteEnum Cookie::getSameSite() const { return this->_sameSite; }
