@@ -194,3 +194,16 @@ void CookieDate::setSecond(const std::string &second) {
 
     this->_second = second;
 }
+
+int CookieDate::getMonthAsNumber() const {
+    static const std::string validMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    int asNumber = 0;
+    for (size_t i = 0; i < sizeof(validMonths) / sizeof(validMonths[0]); ++i) {
+        if (this->_month == validMonths[i]) {
+            asNumber = i;
+            break;
+        }
+    }
+    return asNumber;
+}

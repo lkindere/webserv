@@ -51,6 +51,7 @@ public:
     std::string getDayName() const { return this->_dayName; }
     std::string getDay() const { return this->_day; }
     std::string getMonth() const { return this->_month; }
+    int getMonthAsNumber() const;
     std::string getYear() const { return this->_year; }
     std::string getHour() const { return this->_hour; }
     std::string getMinut() const { return this->_minute; }
