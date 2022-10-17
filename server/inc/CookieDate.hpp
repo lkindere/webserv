@@ -15,13 +15,14 @@ private:
     std::string _second;
 
 protected:
-	CookieDate() /* = delete */;
+    CookieDate() /* = delete */;
+
 public:
     // Throws on Failure
     CookieDate(const std::string &dayName, const std::string &day, const std::string &month, const std::string &year, const std::string &hour, const std::string &minute, const std::string &second);
     CookieDate(const CookieDate &cookieDate);
 
-	virtual ~CookieDate() {}
+    virtual ~CookieDate() {}
 
     /* Private Member Functions */
 private:

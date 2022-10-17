@@ -1,12 +1,11 @@
 #include "CookieDate.hpp"
 
-#include <iostream>
 #include <exception>
 
 #include "uString.hpp"
 
 CookieDate::CookieDate() {
-	// throw std::logic_error("Default Constructor should not be called");
+    // throw std::logic_error("Default Constructor should not be called");
 }
 
 // Throws on Failure
