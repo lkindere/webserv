@@ -52,7 +52,7 @@ bool CookieDate::_isValidDayName(const std::string &dayName) const {
         "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 
     bool isDayNameValid = false;
-    for (size_t i = 0; i < validDayNames->length(); ++i) {
+    for (size_t i = 0; i < sizeof(validDayNames) / sizeof(validDayNames[0]); ++i) {
         if (validDayNames[i] == dayName) {
             isDayNameValid = true;
             break;
@@ -96,7 +96,7 @@ bool CookieDate::_isValidMonth(const std::string &month) const {
     static const std::string validMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
     bool isValidMonth = false;
-    for (size_t i = 0; i < validMonths->length(); ++i) {
+    for (size_t i = 0; i < sizeof(validMonths) / sizeof(validMonths[0]); ++i) {
         if (validMonths[i] == month) {
             isValidMonth = true;
             break;
