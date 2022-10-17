@@ -14,9 +14,13 @@ private:
     std::string _minute;
     std::string _second;
 
+protected:
+	CookieDate() /* = delete */;
 public:
     // Throws on Failure
     CookieDate(const std::string &dayName, const std::string &day, const std::string &month, const std::string &year, const std::string &hour, const std::string &minute, const std::string &second);
+
+	virtual ~CookieDate() {}
 
     /* Private Member Functions */
 private:
@@ -52,4 +56,7 @@ public:
     std::string getSecond() const { return this->_second; }
 };
 
-struct NonSpecifiedCookieDate : public CookieDate {};
+struct NonSpecifiedCookieDate : public CookieDate {
+public:
+	NonSpecifiedCookieDate() : CookieDate() {};
+};

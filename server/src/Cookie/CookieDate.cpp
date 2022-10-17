@@ -1,8 +1,13 @@
 #include "CookieDate.hpp"
 
 #include <iostream>
+#include <exception>
 
 #include "uString.hpp"
+
+CookieDate::CookieDate() {
+	// throw std::logic_error("Default Constructor should not be called");
+}
 
 // Throws on Failure
 CookieDate::CookieDate(const std::string &dayName, const std::string &day, const std::string &month, const std::string &year, const std::string &hour, const std::string &minute, const std::string &second) {
@@ -20,6 +25,11 @@ CookieDate::CookieDate(const std::string &dayName, const std::string &day, const
     }
 }
 
+/* Public Member Functions */
+std::string CookieDate::toString() const {
+	return "NotImplemented";
+}
+
 /* Private Member Functions */
 
 bool CookieDate::_isValidDayName(const std::string &dayName) const {
@@ -27,7 +37,7 @@ bool CookieDate::_isValidDayName(const std::string &dayName) const {
         "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 
     bool isDayNameValid = false;
-    for (int i = 0; i < validDayNames->length(); ++i) {
+    for (size_t i = 0; i < validDayNames->length(); ++i) {
         if (validDayNames[i] == dayName) {
             isDayNameValid = true;
             break;
@@ -71,7 +81,7 @@ bool CookieDate::_isValidMonth(const std::string &month) const {
     static const std::string validMonths[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
     bool isValidMonth = false;
-    for (int i = 0; i < validMonths->length(); ++i) {
+    for (size_t i = 0; i < validMonths->length(); ++i) {
         if (validMonths[i] == month) {
             isValidMonth = true;
             break;
@@ -88,12 +98,36 @@ bool CookieDate::_isValidYear(const std::string &year) const {
 }
 
 bool CookieDate::_isValidHour(const std::string &hour) const {
+	if (hour.length() != 2)
+		return false;
+
+	const int hourAsInt = FromString< int >(hour);
+	if (hourAsInt <= 0 || hourAsInt > 24)
+		return false;
+
+	return true;
 }
 
 bool CookieDate::_isValidMinute(const std::string &minute) const {
+	if (minute.length() != 2)
+		return false;
+	
+	const int minuteAsInt = FromString<int>(minute);
+	if (minuteAsInt < 0 || minuteAsInt >= 59)
+		return false;
+	
+	return true;
 }
 
 bool CookieDate::_isValidSecond(const std::string &second) const {
+	if (second.length() != 2)
+		return false;
+	
+	const int secondAsInt = FromString<int>(second);
+	if (secondAsInt < 0 || secondAsInt >= 59)
+		return false;
+
+	return true;
 }
 
 /* Setter / Getter */
