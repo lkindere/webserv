@@ -4,7 +4,7 @@ SERVER_DIR = ./server
 all: $(NAME)
 
 
-$(NAME): $(shell find $(SERVER_DIR)/ -type f)
+$(NAME): $(shell find $(SERVER_DIR)/ -type f -name '*.cpp')
 	@$(MAKE) -C $(SERVER_DIR) all
 	@cp $(SERVER_DIR)/$(NAME) $(NAME)
 

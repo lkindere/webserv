@@ -1,6 +1,13 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -g3 -DDEBUG
-LDFLAGS = -L./libs -lconfigparser -lutils
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_LIB_INC) -g3 -DDEBUG
+LDFLAGS = -L./libs -lutils -L./libs -lconfigparser 
+
+CGI_BIN_DIR = ./cgi-bin
+CGI_SRCS_DIR = ../cgi
+
+UTILS_LIB_DIR = ../utils
+UTILS_LIB = $(UTILS_LIB_DIR)/libutils.a
+UTILS_LIB_INC = $(UTILS_LIB_DIR)/inc/
 
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
@@ -19,19 +26,20 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
-all: compile_cgis $(CONFIG_PARSER_LIB) $(BIN)
+all: $(UTILS_LIB) $(CONFIG_PARSER_LIB) $(BIN)
 	
 
-compile_cgis:
-	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
+$(UTILS_LIB):
+	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
+	@$(MAKE) --no-print-directory -C $(dir $@)
 
-$(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f)
+$(CONFIG_PARSER_LIB):
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
 	@$(MAKE) --no-print-directory -C $(dir $@)
 
 $(BIN): $(OBJECTS)
 	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
-	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 -include $(DEPENDS)
 
@@ -45,6 +53,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
 
 .PHONY: clean
 clean:
+	@$(MAKE) -C $(dir $(UTILS_LIB)) clean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
 	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
 	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
@@ -52,6 +61,7 @@ clean:
 
 .PHONY: fclean
 fclean: clean
+	@$(MAKE) -C $(dir $(UTILS_LIB)) fclean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
 	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
 	@$(RM) $(BIN)
@@ -67,3 +77,6 @@ run: all
 .PHONY: debug
 debug:
 	$(CXX) -g -DDEBUG $(CXXFLAGS) $(SOURCES) $(LDFLAGS) -o $(BIN)_debug
+
+get_cgi_bin_dir:
+	@echo $(CGI_BIN_DIR)
