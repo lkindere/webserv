@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <algorithm>
+#include <stdlib.h>
 
 // #ifdef DEBUG
     #include <iostream>
@@ -38,7 +39,8 @@ const Location *Server::getLocation(const string &uri) const {
     pair<size_t, size_t>    current(make_pair(0, (size_t)-1));
     for (size_t i = 0; i < _locations.size(); ++i) {
         deque< string > loc(split(_locations[i].uri(), "/", true));
-        pair<size_t, size_t> match = getMatches(path, loc);
+        pair<size_t, size_t> match = getMatches(loc, path);
+        cout << "LOC: " << _locations[i].uri() << " matches: " << match.first << " mismatches: " << match.second << endl;
         if (match.first > current.first
             || (match.first == current.first && match.second < current.second)) {
             ptr = &_locations[i];
@@ -55,36 +57,40 @@ const Location *Server::getLocation(const string &uri) const {
  * @param path 
  * @return map<string, string> 
  */
-map<string, string> Server::generateENV(const Request& request, const string& path) const {
-    map<string, string> env;
-    env.insert(make_pair("SERVER_SOFTWARE", "potatoserv/0.01"));
-    env.insert(make_pair("SERVER_PROTOCOL", "HTTP/1.1"));
-    env.insert(make_pair("GATEWAY_INTERFACE", "CGI/1.1"));
-    env.insert(make_pair("SERVER_NAME", host()));
-    env.insert(make_pair("SERVER_PORT", itostr(port())));
-    env.insert(make_pair("REQUEST_METHOD", toSmethod(request.method())));
-    env.insert(make_pair("CONTENT_LENGTH", itostr(request.contentlength())));
-    env.insert(make_pair("REMOTE_HOST", getPeer(request.fd())));
-    env.insert(make_pair("REMOTE_ADDR", getPeer(request.fd())));
-    env.insert(make_pair("SCRIPT_NAME", getScriptname(path)));
-    env.insert(make_pair("QUERY_STRING", request.query()));
-    env.insert(make_pair("CONTENT_TYPE", request.getHeader("Content-Type")));
-    env.insert(make_pair("HTTP_ACCEPT", request.getHeader("Accept")));
-    env.insert(make_pair("HTTP_USER_AGENT", request.getHeader("User-Agent")));
-    env.insert(make_pair("HTTP_REFERER", request.getHeader("Referer")));
-    //Is it really needed?
-    env.insert(make_pair("PATH_INFO", ""));
-    env.insert(make_pair("PATH_TRANSLATED", ""));
+vector<string> Server::generateENV(const Request& request, const string& path) const {
+    vector<string> env;
+    env.push_back(string("SERVER_SOFTWARE") + "=" + "potatoserv/0.01");
+    env.push_back(string("SERVER_PROTOCOL") + "=" + "HTTP/1.1");
+    env.push_back(string("GATEWAY_INTERFACE") + "=" + "CGI/1.1");
+    env.push_back(string("SERVER_SOFTWARE") + "=" + "potatoserv/0.01");
+    env.push_back(string("SERVER_NAME") + "=" + host());
+    env.push_back(string("SERVER_PORT") + "=" + itostr(port()));
+    env.push_back(string("REQUEST_METHOD") + "=" + toSmethod(request.method()));
+    env.push_back(string("CONTENT_LENGTH") + "=" + itostr(request.contentlength()));
+    env.push_back(string("REMOTE_ADDR") + "=" + getPeer(request.fd()));
+    env.push_back(string("SCRIPT_NAME") + "=" + getScriptname(path));
+    env.push_back(string("QUERY_STRING") + "=" + request.query());
+    env.push_back(string("CONTENT_TYPE") + "=" + request.getHeader("Content-Type"));
+    env.push_back(string("HTTP_ACCEPT") + "=" + request.getHeader("Accept"));
+    env.push_back(string("HTTP_USER_AGENT") + "=" + request.getHeader("User-Agent"));
+    env.push_back(string("HTTP_REFERER") + "=" + request.getHeader("Referer"));
+
+    // // Custom
+    // env.push_back(string("UPLOAD_PATH") + "=" + getenv("UPLOAD_PATH"));
+    // Is it really needed?
+    env.push_back(string("REMOTE_HOST") + "=" + "");
+    env.push_back(string("PATH_INFO") + "=" + "");
+    env.push_back(string("PATH_TRANSLATED") + "=" + "");
     //Auth not supported
-    env.insert(make_pair("AUTH_TYPE", ""));
-    env.insert(make_pair("REMOTE_USER", ""));
-    env.insert(make_pair("REMOTE_IDENT", ""));
+    env.push_back(string("AUTH_TYPE") + "=" + "");
+    env.push_back(string("REMOTE_USER") + "=" + "");
+    env.push_back(string("REMOTE_IDENT") + "=" + "");
 
 
     cout << "\n---ENV:---\n";
-    for (map<string, string>::const_iterator it = env.begin();
+    for (vector<string>::const_iterator it = env.begin();
         it != env.end(); ++it)
-        cout << it->first << " : " << it->second << '\n';
+        cout << *it << '\n';
     cout << endl;
     return env;
 }

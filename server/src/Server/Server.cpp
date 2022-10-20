@@ -33,6 +33,7 @@ int Server::serve(Request &request) const {
     const Location *location(getLocation(request.uri()));
     if (location == NULL)
         return serveRoot(request);
+    cout << "Got location: " << location->uri() << endl;
     return serveLocation(request, *location);
 }
 
@@ -47,8 +48,6 @@ int Server::serveRoot(Request &request) const {
         return mget(request, path);
     if (request.method() == DELETE)
         return mdelete(request, path);
-    if (request.method() == POST)
-        return mpost(request, path);
     return 0;
 }
 
@@ -73,7 +72,7 @@ int Server::serveLocation(Request &request, const Location &location) const {
     if (request.method() == DELETE)
         return mdelete(request, path);
     if (request.method() == POST)
-        return mpost(request, path);
+        return mpost(request, location);
     return 0;
 }
 
@@ -90,8 +89,10 @@ int Server::serveCGI(Request& request, const Location& location, const string& p
     if (access(path.data(), X_OK) != 0)
         return serveError(request, 403);
     (void)location;
+    cout << "Generating ENV\n";
     Cgi lol(generateENV(request, path));
-    string output = lol.execute(path);
+    cout << "EXECUTING CGI\n";
+    string output = lol.execute(request, path);
     cout << "CGI OUTPUT:\n" << output << endl;
     request.generateResponse("200 OK", "text/html", output);
     request.sendResponse();
@@ -116,7 +117,7 @@ int Server::serveDirectory(Request &request, const Location &location) const {
             return mget(request, indexpath);
     }
     if (location.autoindex() == true)
-        return serveAutoindex(request, path);
+        return serveAutoindex(request, location, path);
     return serveError(request, 403);
 }
 
@@ -140,18 +141,19 @@ int Server::serveRedirect(Request& request, const Location& location) const {
  * @param path full filepath for reading
  * @return int 0 on success
  */
-int Server::serveAutoindex(Request& request, const string& path) const {
+int Server::serveAutoindex(Request& request, const Location& location, const string& path) const {
     stringstream ss;
+    cout << "AUTOINDEX PATH: " << path << endl;
     DIR* dir = opendir(path.data());
     if (dir == NULL)
         return serveError(request, 500);
     ss << "<!DOCTYPE html><html>";
     ss << "<head><title>Autoindex</title></head><body>";
-    ss << "<h1>Index " << request.uri() << "\n\n\n\n</h1>";
+    ss << "<h1>Index " << request.uri() << "</h1>";
     for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)){
         string filename(ent->d_name);
         if (filename.size() > 0 && filename[0] != '.')
-            ss << "<p><a href=\"/" << filename << "\">" << filename << "</a></p>";
+            ss << "<p><a href=\"" << location.uri() << filename << "\">" << filename << "</a></p>";
     }
     ss << "</body></html>";
     request.generateResponse("200 OK", "text/html", ss.str());

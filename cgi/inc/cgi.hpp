@@ -1,17 +1,17 @@
 #pragma once
 
 #include <string>
-#include <map>
+#include <vector>
 
 class Request;
 
 class Cgi {
 	public:
-		Cgi(const std::map< std::string, std::string >& env);
+		Cgi(const std::vector<std::string>& env);
 
-		std::string execute(std::string path);
+		std::string execute(Request& request, std::string path);
 
 	private:
-		std::map<std::string, std::string> _env;
-        std::string                        _output;
+		std::vector<std::string> _env;
+        std::string              _output;
 };

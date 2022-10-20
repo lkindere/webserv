@@ -19,6 +19,7 @@ using namespace std;
  * @return int 0 on success
  */
 int Server::mget(Request &request, const string& path) const {
+    cout << "GETTING PATH: " << path << endl;
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), R_OK) != 0)
@@ -35,20 +36,11 @@ int Server::mget(Request &request, const string& path) const {
     return 0;
 }
 
-int Server::mpost(Request& request, const string& path) const {
+int Server::mpost(Request& request, const Location& location) const {
     const set<string>& types = request.types();
-    if (types.find("application/x-www-form-urlencoded") != types.end()){
-        request.setStatus(COMPLETED);
-#ifdef DEBUG
-        cout << "NOT IMPLEMENTED" << endl;
-#endif
-        return 0;
-    }
-    else if (types.find("multipart/form-data") != types.end())
-        return multipartUploader(request, path);
-    else
-        return plainUploader(request, path);
-    return 0; //Not implemented - text/plain
+    if (types.find("multipart/form-data") != types.end())
+        return multipartUploader(request, location);
+    return serveError(request, 403);
 }
 
 /**

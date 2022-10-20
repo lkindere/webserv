@@ -7,57 +7,54 @@
 
 using namespace std;
 
-Cgi::Cgi(const map<string, string>& env) : _env(env) {}
-
-string Cgi::execute(string path) {
-    cout << "CGI THINGY\n";
-    char **env = { NULL };
-    char **argv = { NULL };
-    pid_t pid;
-    int std_in = dup(STDIN_FILENO);
-    int std_out = dup(STDOUT_FILENO);
-    string new_output;
-
-//         env = envToString();
-//         argv = keyMapConvert(_env[“PATH_TRANSLATED”]);
-    FILE *file_in = fopen("tmpIn", "w+");
-    FILE *file_out = fopen("tmpOut", "w+");
-    int fdIn = fileno(file_in);
-    int fdOut = fileno(file_out);
-    int status;
-
-    write(fdIn, _output.c_str(), _output.size());
-    lseek(fdIn, 0, SEEK_SET);
-    pid = fork();
-    if (pid == -1) {
-        cerr << "CGI: fork crashed" << endl;
-        return ("<html><body>Error: CGI Process</body></html>");
-    } else if (pid == 0) {
-        dup2(fdIn, STDIN_FILENO);
-        dup2(fdOut, STDOUT_FILENO);
-        execve(path.data(), argv, env);
-        cerr << "ERROR: CGI child: " << strerror(errno) << endl;
-        write(STDOUT_FILENO, "Status: 500\r\n", 14);
-        exit(1);
-    } else {
-        char buffer[4096];
-        waitpid(-1, &status, 0);
-        lseek(fdOut, 0, SEEK_SET);
-        int ret = 1;
-        while (ret > 0) {
-            memset(buffer, 0, 4096);
-            ret = read(fdOut, buffer, 4096 - 1);
-            new_output += buffer;
+class Pipe
+{
+    public:
+        Pipe() : _error(false) {
+            if (pipe(_pfd) == -1)
+                _error = true;
         }
+        // ~Pipe() {
+        //     close(_pfd[0]);
+        //     close(_pfd[1]);
+        // }
+
+        int in() const { return _pfd[0]; }
+        int out() const { return _pfd[1]; }
+        void closein() { close(_pfd[0]); }
+        void closeout() { close(_pfd[1]); }
+        bool error() const { return _error; }
+
+    private:
+        int _pfd[2];
+        bool _error;
+};
+
+Cgi::Cgi(const vector<string>& env) : _env(env) {}
+
+
+string Cgi::execute(Request& request, string path) {
+    char** argv = { NULL };
+    char* envp[_env.size() + 1];
+    for (size_t i = 0; i < _env.size(); ++i)
+        envp[i] = (char *)_env[i].data();
+    envp[_env.size()] = NULL;
+    Pipe p1;
+    Pipe p2;
+    pid_t pid = fork();
+    if (pid < 0)
+        return string();
+    if (pid == 0){
+        p1.closeout();
+        dup2(p1.in(), STDIN_FILENO);
+        // dup2(p2.out(), STDOUT_FILENO);
+        execve(path.data(), argv, envp);
+        cerr << "Execve error: " << strerror(errno) << endl;
+        exit(1);
     }
-    dup2(std_in, STDIN_FILENO);
-    dup2(std_out, STDOUT_FILENO);
-    fclose(file_in);
-    fclose(file_out);
-    close(fdIn);
-    close(fdOut);
-    remove("tmpIn");
-    remove("tmpOut");
-    // delete env
-    return new_output;
+    p1.closein();
+    write(p1.out(), request.message().data(), request.message().length());
+    p1.closeout();
+
+    return string();
 }

@@ -37,26 +37,23 @@ private:
     int serveLocation(Request &request, const Location &location) const;
     int serveDirectory(Request &request, const Location &location) const;
     int serveRedirect(Request& request, const Location& location) const;
-    int serveAutoindex(Request& request, const std::string& path) const;
+    int serveAutoindex(Request& request, const Location& location, const std::string& path) const;
     int serveCGI(Request& request, const Location& location, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
 
     //ServerMethods
     int mget(Request &request, const std::string &path) const;
-    int mpost(Request &request, const std::string &path) const;
+    int mpost(Request &request, const Location& location) const;
     int mdelete(Request &request, const std::string &path) const;
-
     //ServerUpload
-    int plainUploader(Request& request, const std::string& path) const;
-    int multipartUploader(Request& request, const std::string& path) const;
+    int multipartUploader(Request& request, const Location& location) const;
 
 public:
     //ServerMisc
     int checkNames(const std::string &name) const;
     const Location *getLocation(const std::string &uri) const;
-    std::map<std::string, std::string> generateENV(const Request& request,
-            const std::string& path) const;
+    std::vector<std::string> generateENV(const Request& request, const std::string& path) const;
 
     //Getters
     const std::string &host() const { return _config.host; }
