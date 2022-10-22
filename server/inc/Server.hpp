@@ -38,7 +38,7 @@ private:
     int serveDirectory(Request &request, const Location &location) const;
     int serveRedirect(Request& request, const Location& location) const;
     int serveAutoindex(Request& request, const Location& location, const std::string& path) const;
-    int serveCGI(Request& request, const Location& location, const std::string& path) const;
+    int serveCGI(Request& request, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
 

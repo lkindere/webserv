@@ -4,7 +4,7 @@
 #include <vector>
 #include <utility>
 
-
+std::string generateRandom(int n);
 int         isCGI(const std::vector<std::string>& cgi_extensions, const std::string& path);
 int         isDirectory(const std::string &path);
 std::string                     getCWD();

@@ -11,6 +11,26 @@
 using namespace std;
 
 /**
+ * @brief Generates n amount of alphanumeric chars
+ * @param n 
+ * @return string 
+ */
+string generateRandom(int n) {
+    srand(time(NULL));
+    char options[62];
+    for (short i = 0; i < 10; ++i)
+        options[i] = i + 48;
+    for (short i = 10; i < 36; ++i)
+        options[i] = i + 55;
+    for (short i = 36; i < 62; ++i)
+        options[i] = i + 61;
+    string rnd(n, 0);
+    for (size_t i = 0; i < rnd.size(); ++i)
+        rnd[i] = options[rand() % 62];
+    return rnd;
+}
+
+/**
  * @brief Returns 1 if path.extension matches cgi extensions
  * @param cgi_extensions 
  * @param path 

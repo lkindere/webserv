@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
+#include <stdio.h>
 
 #ifdef DEBUG
     #include <iostream>
@@ -10,6 +11,7 @@
 
 #include "Server.hpp"
 #include "uServer.hpp"
+#include "uString.hpp"
 #include "Types.hpp"
 #include "Cgi.hpp"
 
@@ -66,7 +68,7 @@ int Server::serveLocation(Request &request, const Location &location) const {
     if (isDirectory(path))
         return serveDirectory(request, location);
     if (isCGI(location.cgi_extensions(), path))
-        return serveCGI(request, location, path);
+        return serveCGI(request, path);
     if (request.method() == GET)
         return mget(request, path);
     if (request.method() == DELETE)
@@ -76,25 +78,90 @@ int Server::serveLocation(Request &request, const Location &location) const {
     return 0;
 }
 
+int bufferToFile(Request& request, FILE* filebuffer) {
+    fwrite(request.message().data(), request.message().length(), 1, filebuffer);
+    request.setPosted(request.postedlength() + request.message().length());
+    if (request.postedlength() >= request.contentlength())
+        rewind(filebuffer);
+    return 0;
+}
+
+int parseResponse(string& message, map<string, string>& headers, FILE* filebuffer) {
+    message.resize(BUFFER_SIZE);
+    size_t bytes_read = fread((void*)message.data(), 1, BUFFER_SIZE, filebuffer);
+    if (bytes_read < BUFFER_SIZE)
+        message = message.substr(0, bytes_read);
+    while (bytes_read == BUFFER_SIZE) {
+        string tmp(BUFFER_SIZE, 0);
+        bytes_read = fread((void*)tmp.data(), 1, BUFFER_SIZE, filebuffer);
+        message += tmp.substr(0, bytes_read);
+    }
+    size_t start = 0;
+    size_t end = 0;
+    while (end == 0){
+        if (message.substr(start, 2) == "\n\n")
+            end = start + 2;
+        else if (start + 3 < message.size()){
+            if (message.substr(start, 4) == "\r\n\r\n")
+                end = start + 4;
+        }
+        if (++start + 1 >= message.size())
+            return 0;
+    }
+    deque<string> lines = split(message.substr(0, start), "\n", true);
+    for (size_t i = 0; i < lines.size(); ++i){
+        deque<string> current = split(lines[i], ": ", true);
+        for (size_t j = 0; j < current.size(); ++j)
+            cout << current[j] << endl;
+        if (current.size() != 2)
+            return 1;
+        headers.insert(make_pair(current[0], current[1]));
+    }
+    message = message.substr(end);
+    return 0;
+}
+
 /**
  * @brief Will serve CGI
  * @param request 
  * @param path 
  * @return int 
  */
-int Server::serveCGI(Request& request, const Location& location, const string& path) const {
-    cout << "\n--SERVING CGI--\n\n";
+int Server::serveCGI(Request& request, const string& path) const {
+    static map<int, pair<FILE*, FILE*> > filebuffers;
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), X_OK) != 0)
         return serveError(request, 403);
-    (void)location;
-    cout << "Generating ENV\n";
-    Cgi lol(generateENV(request, path));
-    cout << "EXECUTING CGI\n";
-    string output = lol.execute(request, path);
-    cout << "CGI OUTPUT:\n" << output << endl;
-    request.generateResponse("200 OK", "text/html", output);
+    map<int, pair<FILE*, FILE*> >::iterator it = filebuffers.find(request.fd());
+    if (it == filebuffers.end())
+        it = filebuffers.insert(make_pair(request.fd(), make_pair(tmpfile(), tmpfile()))).first;
+    if (request.postedlength() < request.contentlength())
+        return bufferToFile(request, it->second.first);
+    Cgi cgi(generateENV(request, path));
+    if (cgi.execute(path, it->second.first, it->second.second) != 0){
+        fclose(it->second.first);
+        fclose(it->second.second);
+        filebuffers.erase(request.fd());
+        return serveError(request, 500);
+    }
+    string message;
+    map<string, string> headers;
+    if (parseResponse(message, headers, it->second.second)) {
+        fclose(it->second.first);
+        fclose(it->second.second);
+        filebuffers.erase(request.fd());
+        return serveError(request, 500);
+    }
+    fclose(it->second.first);
+    fclose(it->second.second);
+    filebuffers.erase(request.fd());
+    request.setStatus(RESPONDING);
+    map<string, string>::const_iterator type = headers.find("Content-Type");
+    if (type == headers.end())
+        return serveError(request, 500);
+    cout << "TYPE: " << type->second << endl;
+    request.generateResponse("200 OK", type->second, message);
     request.sendResponse();
     return 0;
 }
@@ -143,7 +210,6 @@ int Server::serveRedirect(Request& request, const Location& location) const {
  */
 int Server::serveAutoindex(Request& request, const Location& location, const string& path) const {
     stringstream ss;
-    cout << "AUTOINDEX PATH: " << path << endl;
     DIR* dir = opendir(path.data());
     if (dir == NULL)
         return serveError(request, 500);
