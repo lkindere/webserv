@@ -74,14 +74,10 @@ vector<string> Server::generateENV(const Request& request, const string& path) c
     env.push_back(string("HTTP_ACCEPT") + "=" + request.getHeader("Accept"));
     env.push_back(string("HTTP_USER_AGENT") + "=" + request.getHeader("User-Agent"));
     env.push_back(string("HTTP_REFERER") + "=" + request.getHeader("Referer"));
-
-    // // Custom
-    // env.push_back(string("UPLOAD_PATH") + "=" + getenv("UPLOAD_PATH"));
-    // Is it really needed?
+    env.push_back(string("PATH_INFO") + "=" + getPathInfo(path));
+    env.push_back(string("PATH_TRANSLATED") + "= " + path);
+    
     env.push_back(string("REMOTE_HOST") + "=" + "");
-    env.push_back(string("PATH_INFO") + "=" + "");
-    env.push_back(string("PATH_TRANSLATED") + "=" + "");
-    //Auth not supported
     env.push_back(string("AUTH_TYPE") + "=" + "");
     env.push_back(string("REMOTE_USER") + "=" + "");
     env.push_back(string("REMOTE_IDENT") + "=" + "");

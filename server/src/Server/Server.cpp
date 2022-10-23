@@ -127,8 +127,9 @@ int parseResponse(string& message, map<string, string>& headers, FILE* filebuffe
  * @param path 
  * @return int 
  */
-int Server::serveCGI(Request& request, const string& path) const {
+int Server::serveCGI(Request& request, const string& fullpath) const {
     static map<int, pair<FILE*, FILE*> > filebuffers;
+    string path = fullpath.substr(0, fullpath.rfind(getPathInfo(fullpath)));
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), X_OK) != 0)
@@ -138,7 +139,7 @@ int Server::serveCGI(Request& request, const string& path) const {
         it = filebuffers.insert(make_pair(request.fd(), make_pair(tmpfile(), tmpfile()))).first;
     if (request.postedlength() < request.contentlength())
         return bufferToFile(request, it->second.first);
-    Cgi cgi(generateENV(request, path));
+    Cgi cgi(generateENV(request, fullpath));
     if (cgi.execute(path, it->second.first, it->second.second) != 0){
         fclose(it->second.first);
         fclose(it->second.second);

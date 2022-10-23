@@ -30,6 +30,8 @@ string generateRandom(int n) {
     return rnd;
 }
 
+#include <iostream>
+
 /**
  * @brief Returns 1 if path.extension matches cgi extensions
  * @param cgi_extensions 
@@ -40,10 +42,21 @@ int isCGI(const vector<string>& cgi_extensions, const string& path){
     size_t i = path.rfind('.');
     if (i == path.npos)
         return 0;
-    if (find(cgi_extensions.begin(), cgi_extensions.end(), path.substr(i))
-        != cgi_extensions.end())
-        return 1;
+    for (size_t j = 0; j < cgi_extensions.size(); ++j) {
+        if (cgi_extensions[j] == path.substr(i, cgi_extensions[j].length()))
+            return 1;
+    }
     return 0;
+}
+
+string getPathInfo(const string& path) {
+    size_t i = path.rfind('.');
+    if (i == path.npos)
+        return string();
+    i = path.find('/', i);
+    if (i == path.npos)
+        return string();
+    return path.substr(i);
 }
 
 /**

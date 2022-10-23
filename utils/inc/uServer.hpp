@@ -6,6 +6,7 @@
 
 std::string generateRandom(int n);
 int         isCGI(const std::vector<std::string>& cgi_extensions, const std::string& path);
+std::string getPathInfo(const std::string& path);
 int         isDirectory(const std::string &path);
 std::string                     getCWD();
 std::string                     getPeer(int sock_fd);
