@@ -20,6 +20,8 @@ enum e_rstat
 struct reqStatus
 {
     int error;
+    bool headers_parsed;
+    bool content_unchunked;
     e_rstat status;
     size_t max_size;
 };
@@ -36,15 +38,15 @@ struct reqInfo
 struct reqContent
 {
     size_t contentlength;
+    size_t responselength;
     size_t readlength;
     size_t postedlength;
     size_t sentlength;
-    size_t responselength;
     std::string boundary;
+    std::string encoding;
     std::set< std::string> types;
-    std::vector<std::string> encodings;
-    std::string message;
     std::map<std::string, std::string>  headers;
+    std::string message;
 };
 
 struct reqForms
@@ -80,15 +82,14 @@ public:
     std::string         getHeader(const std::string& header) const;
     void                setPosted(size_t len) { _content.postedlength = len; }
 
-    void                readMessage();
+    void                readRequest();
     void                sendResponse();
     void                generateResponse(const std::string &status, const std::string &type, 
         const std::string& message, const std::vector<std::string>& headers = std::vector<std::string>());
    
 
 private:
-    void init();
-    std::deque< std::string > readRequest();
+    void init(const std::string& input);
     void parseStart(std::deque< std::string > &lines);
     void parseHeaders(std::deque< std::string > &lines);
     void parseMessage(std::deque< std::string > &lines);

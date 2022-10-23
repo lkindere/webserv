@@ -185,7 +185,7 @@ int Server::serveDirectory(Request &request, const Location &location) const {
     }
     if (location.autoindex() == true)
         return serveAutoindex(request, location, path);
-    return serveError(request, 403);
+    return serveError(request, 404);
 }
 
 /**

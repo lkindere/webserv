@@ -78,7 +78,6 @@ int Webserv::accept() {
  * @param fd 
  */
 void Webserv::terminalHandler(int fd){
-    cout << "FD: " << fd << std::endl;
     string buffer(255, 0);
     size_t bytes_read = read(fd, (void*)buffer.data(), 255);
     buffer.resize(bytes_read);
@@ -92,8 +91,6 @@ void Webserv::terminalHandler(int fd){
 }
 
 int Webserv::readwrite() {
-    if (_sockets.size() + 1 > _connections.size())
-        throw("FATAL ERROR: LESS CONNECTIONS THAN SOCKETS");
     if (_connections[0].revents & POLLIN)
         terminalHandler(_connections[0].fd);
     for (vector< pollfd >::iterator it = _connections.begin() + _sockets.size() + 1;
@@ -105,7 +102,7 @@ int Webserv::readwrite() {
             if (request == NULL)
                 request = new Request(it->fd, _global.client_max_body_size);
             else
-                request->readMessage();
+                request->readRequest();
             if (request->status() == POSTING || request->status() == RESPONDING) 
                 it->events = POLLOUT;
         }

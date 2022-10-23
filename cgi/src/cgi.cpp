@@ -10,7 +10,6 @@ using namespace std;
 
 Cgi::Cgi(const vector<string>& env) : _env(env) {}
 
-
 int Cgi::execute(string path, FILE* in, FILE* out) {
     char** argv = { NULL };
     char* envp[_env.size() + 1];

@@ -25,7 +25,7 @@ int Server::mget(Request &request, const string& path) const {
     if (access(path.data(), R_OK) != 0)
         return serveError(request, 403);
     if (isDirectory(path))
-        return serveError(request, 403);
+        return serveError(request, 404);
     ifstream file(path.data());
     if (file.is_open() == false)
         return serveError(request, 500);
