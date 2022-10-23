@@ -1,7 +1,7 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC)
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC) -DDEBUG
 
-LIB = libconfigparser.a
+LIB = librequest.a
 SRCDIR = ./src
 BUILDDIR = ./build
 OBJDIR = $(BUILDDIR)/obj
@@ -9,12 +9,12 @@ INCDIR = ./inc/
 EXTENSION = .cpp
 
 UTILS_DIR = ../utils
-UTILS_LIB = $(UTILS_DIR)/libutils.a
+UTILS_LIB = $(UTILS_DIR)/librequest.a
 UTILS_INC = $(UTILS_DIR)/inc/
 
 SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
 OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
-# DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES)) //Fix
+DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 
 all: $(UTILS_LIB) $(LIB)
 	

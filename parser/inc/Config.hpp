@@ -6,16 +6,7 @@
 #include <string>
 #include <vector>
 
-/**
- * @brief Defines the HTTP method
- * @param methods: GET, POST, DELETE, INVALID
- */
-enum e_method {
-    GET,
-    POST,
-    DELETE,
-    INVALID
-};
+#include "uMethod.hpp"
 
 /**
  * @brief Global parameters that affect all servers

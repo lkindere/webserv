@@ -1,34 +1,68 @@
-# Targets that can be executed by this Makefile
-TOPTARGETS := all clean fclean re
+CXX = c++
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC) -I $(REQUEST_INC)
 
-# Gets all Subdirectorys of cgi
-SUBDIRS = $(wildcard */.)
+LIB = libcgi.a
+SRCDIR = ./src
+BUILDDIR = ./build
+OBJDIR = $(BUILDDIR)/obj
+INCDIR = ./inc/
+EXTENSION = .cpp
 
-# $(TOPTARGETS): $(SUBDIRS)
+UTILS_DIR = ../utils
+UTILS_LIB = $(UTILS_DIR)/libcgi.a
+UTILS_INC = $(UTILS_DIR)/inc/
 
-all: $(SUBDIRS)
+REQUEST_DIR = ../request
+REQUEST_LIB = $(REQUEST_DIR)/librequest.a
+REQUEST_INC = $(REQUEST_DIR)/inc/
 
-clean: $(SUBDIRS)
+SOURCES := $(wildcard $(SRCDIR)/*$(EXTENSION))
+OBJECTS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(OBJDIR)/%.o,$(SOURCES))
+DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 
-fclean: $(SUBDIRS)
+all: $(UTILS_LIB) $(REQUEST_LIB) $(LIB)
+	
+$(UTILS_LIB):
+	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
 
-re: $(SUBDIRS)
+$(REQUEST_LIB):
+	@printf "$(shell tput setaf 2)Compiling Request Library$(shell tput sgr0)\n"
+	@$(MAKE) -C $(dir $@)
 
 
-$(SUBDIRS):
+$(LIB): $(OBJECTS)
+	@mkdir -p $(dir $(LIB))
+	@printf "$(shell tput setaf 2)Compiling [$(LIB)]$(shell tput sgr0)\n"
+	@ar -r $(LIB) $(OBJECTS)
+	@mkdir -p ../server/libs/
+	@cp $(LIB) ../server/libs/$(notdir $(LIB))
 
-# Gets the Name of the binary of the current Subdir Makefile
-	$(eval BIN := $(shell make --no-print-directory -C $@ get_bin))
-# Gets the cgi-bin Directory (of the server)
-	$(eval CGI_BIN_DIR := $(shell make --no-print-directory -C ../server get_cgi_bin_dir))
+-include $(DEPENDS)
 
-# Executes Makefile in current Subdirectory
-	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS)
+$(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
+	@printf "$(shell tput setaf 2)Compiling [$<]$(shell tput sgr0)\n"
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	@mv $(@:.o=.d) $(BUILDDIR)
 
-# Only Copy the binary if rule all or re is called
-	@if [ -z $(MAKECMDGOALS) ] || [ $(MAKECMDGOALS) = all ] || [ $(MAKECMDGOALS) = re ]; then \
-		mkdir -p $(CGI_BIN_DIR); \
-		cp $(BIN) $(CGI_BIN_DIR)/$(notdir $(BIN)); \
-	fi; \
+# Cleaning Rules #
 
-.PHONY: all $(SUBDIRS)
+.PHONY: clean
+clean:
+	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(BUILDDIR)$(shell tput sgr0)\n"
+	@$(RM) $(OBJECTS) $(DEPENDS)
+	@$(RM) -r $(BUILDDIR)
+
+.PHONY: fclean
+fclean: clean
+	@printf "$(shell tput setaf 1)Removing $(LIB)$(shell tput sgr0)\n"
+	@$(RM) $(LIB)
+
+.PHONY: re
+re: fclean all	
+
+.PHONY: get_lib_name
+get_lib_name:
+	@echo $(LIB)
+
