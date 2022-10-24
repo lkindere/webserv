@@ -63,7 +63,7 @@ void Request::readRequest() {
         if (bytes_read <= 0)
             return;
         _content.message.append(buffer, 0, bytes_read);
-        size_t msgstart = _content.message.rfind("\r\n\r\n");
+        size_t msgstart = _content.message.find("\r\n\r\n");
         if (msgstart == string::npos)
             return;
         init(_content.message.substr(0, msgstart));
@@ -112,22 +112,17 @@ void Request::readRequest() {
             || _content.types.find("multipart/form-data") !=  _content.types.end())
                 _status.status = POSTING;
     }
-#ifdef DEBUG
-    cout << "\n\nMessage:\n";
-    cout << _content.message << "\n\n" << endl;
-#endif
+// #ifdef DEBUG
+//     cout << "\n\nMessage:\n";
+//     cout << _content.message << "\n\n" << endl;
+// #endif
 }
 
 // Splits first line of request to method/URI/protocol
 void Request::parseStart(deque< string > &lines) {
     deque< string > firstline(split(lines.front(), " "));
-    if (firstline.size() != 3){
-        cout << "-----FIRSTLINE NOT 3\n";
-        cout << "firsline size: " << firstline.size() << endl;
-        for (size_t i = 0; i < firstline.size(); ++i)
-            cout << "Line: " << firstline[i] << endl;
+    if (firstline.size() != 3)
         return setError(400);
-    }
     _info.method = toEmethod(firstline[0]);
     if (_info.method == INVALID)
         return setError(405);
@@ -151,10 +146,8 @@ void Request::parseHeaders(deque< string > &lines) {
     bool haslength = false;
     while (lines.size() != 0 && lines.front().size() != 0) {
         deque< string > current(split(lines.front(), ": "));
-        if (current.size() != 2){
-            cout << "-----CURRENT SIZE != 2\n";
+        if (current.size() != 2)
             return setError(400);
-        }
         addHeader(current);
         if (current[0] == "Host")
             _info.host = split(current[1], ":")[0];
@@ -204,17 +197,14 @@ void Request::addHeader(const deque<string>& line) {
 
 
 void Request::sendResponse() {
-    cout << "SENT RESPONSE\n";
     size_t bytes_wrote = write(_fd, _response.data(), _response.length());
     if (bytes_wrote <= 0)
         return;
     _content.sentlength += bytes_wrote;
     if (_content.sentlength < _content.responselength)
         _response = _response.substr(bytes_wrote);
-    else {
-        cout << "COMPLETED RESPONSE\n";
+    else 
         _status.status = COMPLETED;
-    }
 }
 
 void Request::generateResponse(const string &status, const string &type, const string& message, const vector<string>& headers) {
