@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -I $(REQUEST_INC) -I $(CGI_INC) -g3 -DDEBUG
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -I $(REQUEST_INC) -I $(CGI_INC) -g3
 LDFLAGS = -L./libs -lconfigparser -lutils -lrequest -lcgi
 
 # CGI_SRCS_DIR = ../cgi

@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC) -DDEBUG
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(UTILS_INC)
 
 LIB = librequest.a
 SRCDIR = ./src
