@@ -15,8 +15,7 @@ int error() {
 };
 
 Socket::Socket(const std::string &host, int port)
-    : _fd(-1),
-      _len(sizeof(_address)) {
+    : _fd(-1), _len(sizeof(_address)), _host(host), _port(port) {
     _address.sin_family = AF_INET;
     _address.sin_addr.s_addr = inet_addr(host.data());
     _address.sin_port = htons(port);

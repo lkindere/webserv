@@ -59,6 +59,16 @@ string getPathInfo(const string& path) {
     return path.substr(i);
 }
 
+string removePathInfo(const string& path) {
+    size_t i = path.rfind('.');
+    if (i == path.npos)
+        return string();
+    i = path.find('/', i);
+    if (i == path.npos)
+        return string();
+    return path.substr(0, i);
+}
+
 /**
  * @brief Checks if path is a directory
  * @param path 
@@ -145,7 +155,8 @@ string generateLocationURI(const string &root, const string &location, const str
  */
 string getScriptname(const string& fullpath) {
     string cwd = getCWD();
-    if (fullpath.find(cwd) == fullpath.npos)
-        return fullpath;
-    return fullpath.substr(cwd.length());
+    string scriptname = fullpath;
+    if (fullpath.find(cwd) != fullpath.npos)
+        scriptname = fullpath.substr(cwd.length());
+    return removePathInfo(scriptname);
 }
