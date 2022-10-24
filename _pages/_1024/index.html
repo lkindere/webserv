@@ -1,19 +1,37 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Index</title>
-</head>
-<body>
+<html lang="en-US">
+  <head>
+	<link rel="stylesheet" href="../ressources/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>My test page</title>
+  </head>
+  <body style="background-color: #3a383d">
+	<h1>Login Form</h1>
+	<!-- Button to open the modal login form -->
+<button onclick="document.getElementById('id01').style.display='block'">Login</button>
+<!-- The Modal -->
+<div id="id01" class="modal">
+  <span onclick="document.getElementById('id01').style.display='none'"
+class="close" title="Close Modal">&times;</span>
+<form action="action_page.php" method="post" style="background-color:#737373">
+  <div class="imgcontainer">
+    <img src="../ressources/avatar.png" alt="Avatar" class="avatar">
+  </div>
 
-<h1>Index port 1024</h1>
+  <div class="container">
+    <label for="uname"><b>Username</b></label>
+    <input type="text" placeholder="Enter Username" name="uname" required>
 
-<form action="/form.cgi" method="post">
-    <input type="text" id="name1" name="name1">
-    <input type="text" id="name2" name="name2">
-    <input type="submit" value="Submit">
-  </form>
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" name="psw" required>
 
+    <button type="submit">Login</button>
+  </div>
+
+    <div class="container" style="background-color:#737373">
+      <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
+  </div>
+</form>
 </body>
 </html>
-
-
