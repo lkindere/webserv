@@ -20,9 +20,6 @@ fclean:
 
 re: fclean all
 
-run: all
-	./$(NAME)
-
 debug:
 	@$(MAKE) -C $(SERVER_DIR) debug
 	@cp $(SERVER_DIR)/$(NAME)_debug $(NAME)_debug
