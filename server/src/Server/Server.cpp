@@ -35,7 +35,6 @@ int Server::serve(Request &request) const {
     const Location *location(getLocation(request.uri()));
     if (location == NULL)
         return serveRoot(request);
-    cout << "Got location: " << location->uri() << endl;
     return serveLocation(request, *location);
 }
 
@@ -111,8 +110,6 @@ int parseResponse(string& message, map<string, string>& headers, FILE* filebuffe
     deque<string> lines = split(message.substr(0, start), "\n", true);
     for (size_t i = 0; i < lines.size(); ++i){
         deque<string> current = split(lines[i], ": ", true);
-        for (size_t j = 0; j < current.size(); ++j)
-            cout << current[j] << endl;
         if (current.size() != 2)
             return 1;
         headers.insert(make_pair(current[0], current[1]));
@@ -161,7 +158,9 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
     map<string, string>::const_iterator type = headers.find("Content-Type");
     if (type == headers.end())
         return serveError(request, 500);
+#ifdef DEBUG
     cout << "TYPE: " << type->second << endl;
+#endif
     request.generateResponse("200 OK", type->second, message);
     request.sendResponse();
     return 0;

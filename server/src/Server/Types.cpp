@@ -94,6 +94,7 @@ static string howDoMimesWork(const string& extension) {
     types.insert(make_pair(".3gp", "video/3gpp"));
     types.insert(make_pair(".3g2", "video/3gpp2"));
     types.insert(make_pair(".7z", "application/x-7z-compressed"));
+    types.insert(make_pair(".mov", "video/quicktime"));
     map< string, string >::const_iterator it(types.find(extension));
     if (it != types.end()){
         cout << "Type: " << it->second;
