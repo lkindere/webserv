@@ -4,6 +4,10 @@ LDFLAGS = -L./libs -lconfigparser -lutils -lrequest -lcgi
 
 # CGI_SRCS_DIR = ../cgi
 
+UTILS_LIB_DIR = ../utils
+UTILS_LIB = $(UTILS_LIB_DIR)/libutils.a
+UTILS_LIB_INC = $(UTILS_LIB_DIR)/inc/
+
 CONFIG_PARSER_DIR = ../parser
 CONFIG_PARSER_LIB = $(CONFIG_PARSER_DIR)/libconfigparser.a
 CONFIG_PARSER_INC = $(CONFIG_PARSER_DIR)/inc/
@@ -57,7 +61,7 @@ $(CGI_LIB):
 
 $(BIN): $(OBJECTS)
 	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
-	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 -include $(DEPENDS)
 
@@ -96,3 +100,10 @@ re: fclean all
 .PHONY: run
 run: all
 	./$(BIN) ../configs/basic.conf
+
+.PHONY: debug
+debug:
+	$(CXX) -g -DDEBUG $(CXXFLAGS) $(SOURCES) $(LDFLAGS) -o $(BIN)_debug
+
+get_cgi_bin_dir:
+	@echo $(CGI_BIN_DIR)
