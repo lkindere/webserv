@@ -19,7 +19,6 @@ using namespace std;
  * @return int 0 on success
  */
 int Server::mget(Request &request, const string& path) const {
-    cout << "GETTING PATH: " << path << endl;
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), R_OK) != 0)
@@ -36,6 +35,12 @@ int Server::mget(Request &request, const string& path) const {
     return 0;
 }
 
+/**
+ * @brief Only handles the "builtin" server multipart uploader
+ * @param request 
+ * @param location 
+ * @return int 
+ */
 int Server::mpost(Request& request, const Location& location) const {
     const set<string>& types = request.types();
     if (types.find("multipart/form-data") != types.end())

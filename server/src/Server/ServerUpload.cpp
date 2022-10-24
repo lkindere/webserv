@@ -13,7 +13,7 @@
 
 using namespace std;
 
-string getFilename(const string& message) {
+static string getFilename(const string& message) {
     size_t start = message.find("filename=\"");
     if (start == message.npos)
         return generateRandom(10);
@@ -24,7 +24,7 @@ string getFilename(const string& message) {
     return message.substr(start, end - start);
 }
 
-void appendBeforeExtension(string& filename, const string& append) {
+static void appendBeforeExtension(string& filename, const string& append) {
     size_t i = filename.rfind('.');
     if (i == filename.npos)
         filename += append;
@@ -32,11 +32,10 @@ void appendBeforeExtension(string& filename, const string& append) {
         filename.insert(i, append);
 }
 
-string generateUploadMessage(const string& filename, const string& uploadpath) {
+static string generateUploadMessage(const string& filename, const string& uploadpath) {
     string message("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1>");
     message += "<p><a href=\"" + uploadpath + "/" + filename + "\">" + filename + "</a></p></body></html>";
     return message;
-    // return string("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1></body></html>");
 }
 
 /**

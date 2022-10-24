@@ -23,10 +23,8 @@ Webserv::Webserv(const ConfigData &conf) : _global(conf.global) {
     for (vector< ServerConfig >::const_iterator srv = conf.servers.begin();
          srv != conf.servers.end(); ++srv) {
         _servers.push_back(Server(&_global, *srv));
-        if (socks.insert(make_pair(srv->host, srv->port)).second == true){
+        if (socks.insert(make_pair(srv->host, srv->port)).second == true)
             _sockets.push_back(Socket(srv->host, srv->port));
-            cout << "Listening on: " << srv->host << ':' << srv->port << endl;
-        }
     }
 }
 
@@ -74,19 +72,32 @@ int Webserv::accept() {
 
 /**
  * @brief Handles terminal 
- * 
  * @param fd 
  */
-void Webserv::terminalHandler(int fd){
+void Webserv::terminalHandler(int fd) {
     string buffer(255, 0);
     size_t bytes_read = read(fd, (void*)buffer.data(), 255);
     buffer.resize(bytes_read);
+    if (buffer == "help\n" || buffer == "HELP\n")
+        cout << "Available commands:\nEXIT: terminates the server\nLS: lists current connections\n";
     if (buffer == "exit\n" || buffer == "EXIT\n"){
         terminate();
         exit(0);
     }
-    if (buffer == "ls" || buffer == "LS"){
-
+    if (buffer == "ls\n" || buffer == "LS\n"){
+        for (size_t i = 0; i < _sockets.size(); ++i) {
+            stringstream ss;
+            ss << "Socket: " << _sockets[i].host() << ":" << _sockets[i].port()
+                << " fd: " << _sockets[i].fd() << '\n';
+            cout << ss.rdbuf();
+        }
+        for (size_t i = 1 + _sockets.size(); i < _connections.size(); ++i){
+            stringstream ss;
+            pair<string, short> host(getHost(_connections[i].fd));
+            ss << "Connection: " << host.first << ":" << host.second
+                << " fd: " << _connections[i].fd << "\n";
+            cout << ss.rdbuf();
+        }
     }
 }
 
@@ -144,7 +155,6 @@ int Webserv::checkclose(pollfd& pfd){
  */
 int Webserv::process() {
     int ret = poll(_connections.data(), _connections.size(), TIMEOUT * 1000);
-    cout << "POLL RET: " << ret << endl;
     if (ret < 0)
         return error();
     if (ret == 0)
@@ -166,7 +176,6 @@ int Webserv::rebuild() {
         if (rit->second != NULL && rit->second->status() == COMPLETED)
             rit->second = NULL;
     }
-    cout << "NEXT\n";
     vector<pollfd>::iterator cit(_connections.begin() + _sockets.size() + 1);
     while (cit != _connections.end()){
         if (cit->fd != -1){
@@ -183,10 +192,6 @@ int Webserv::rebuild() {
         else
             ++cit;
     }
-#ifdef DEBUG
-    cout << "\nConnections size: " << _connections.size() << '\n';
-    cout << "Requests size:    " << _requests.size() << "\n\n";
-#endif
     return 0;
 }
 
@@ -227,7 +232,6 @@ const Server *Webserv::getServer(Request &request) {
 }
 
 void Webserv::terminate() {
-    cout << "TERMINATING\n";
     for (size_t i = 1; i < _connections.size(); ++i){
         shutdown(_connections[i].fd, O_RDWR);
         close(_connections[i].fd);
