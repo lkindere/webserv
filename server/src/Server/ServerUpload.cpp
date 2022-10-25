@@ -25,7 +25,7 @@ static string getFilename(const string& message) {
 }
 
 static void appendBeforeExtension(string& filename, const string& append) {
-    size_t i = filename.find('.');
+    size_t i = filename.rfind('.');
     if (i == filename.npos)
         filename += append;
     else

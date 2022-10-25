@@ -108,7 +108,7 @@ static string howDoMimesWork(const string& extension) {
  * @return string
  */
 string getType(const string& path){
-    size_t i = path.find('.');
+    size_t i = path.rfind('.');
     if (i == path.npos)
         return "text/plain";
     return howDoMimesWork(path.substr(i));

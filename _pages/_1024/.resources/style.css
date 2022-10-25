@@ -2,6 +2,16 @@
 h1 {
 	text-align: center;
 }
+
+p {
+	text-align: center;
+	color: rgb(0,0,0);
+}
+
+a {
+	text-align: center;
+	text-emphasis-color: blue;
+}
 /* The Modal (background) */
 .modal {
   display: none; /* Hidden by default */
@@ -65,14 +75,29 @@ form {
 }
 
 /* Full-width inputs */
-input[type=text], input[type=password] {
+input[type=text], input[type=password], input[type=file] {
   background-color: #d0b8de;
   width: 100%;
   padding: 12px 20px;
   margin: 8px 0;
   display: inline-block;
   border: 1px solid#9c77e6;
+  cursor: pointer;
   box-sizing: border-box;
+}
+
+input[type=submit] {
+  background-color:#600ddb;
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid#600ddb;
+  box-sizing: border-box;
+}
+
+input[type=submit]:hover {
+	opacity: 0.8;
 }
 
 /* Set a style for all buttons */

@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" href="../ressources/style.css">
+	<link rel="stylesheet" href=".resources/style.css">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
 </head>
 <body  style="background-color: #3a383d">
 <h1>Upload Form</h1>
-<div class="container">
+<div class="imgcontainer">
 <form action="" method="POST" enctype="multipart/form-data">
+
   <input type="file" name="upload" id="upload">
-</form>
-  <button type="submit">upload file</button>
+  <input type="submit" value="Upload file">
+
 </div>
-<div>
 	<div class="container">
+	  <a href="#" onclick="javascript:window.history.back(-1);return false;">
       <button type="button" class="cancelbtn">Back</button>
-</div>
+	 </a>
+    </div>
+</form>
 </body>
 </html>

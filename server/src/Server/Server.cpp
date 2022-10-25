@@ -86,7 +86,7 @@ int Server::serveLocation(Request &request, const Location &location) const {
  */
 int Server::serveCGI(Request& request, const string& fullpath) const {
     static map<int, pair<FILE*, FILE*> > filebuffers;
-    string path = fullpath.substr(0, fullpath.find(getPathInfo(fullpath)));
+    string path = fullpath.substr(0, fullpath.rfind(getPathInfo(fullpath)));
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), X_OK) != 0)
@@ -165,12 +165,12 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
     if (dir == NULL)
         return serveError(request, 500);
     ss << "<!DOCTYPE html><html>";
-    ss << "<head><title>Autoindex</title></head><body>";
-    ss << "<h1>Index " << request.uri() << "</h1>";
+    ss << "<head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>Autoindex</title></head><body style=\"background-color: #3a383d;color: black;\">";
+    ss << "<h1 style=\"text-align: center;\">Index " << request.uri() << "</h1>";
     for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)){
         string filename(ent->d_name);
         if (filename.size() > 0 && filename[0] != '.')
-            ss << "<p><a href=\"" << location.uri() << filename << "\">" << filename << "</a></p>";
+            ss << "<p style=\"text-align: center\"><a href=\"" << location.uri() << filename << "\" style=\"color: #d0b8de;\">" << filename << "</a></p>";
     }
     ss << "</body></html>";
     request.generateResponse("200 OK", "text/html", ss.str());
@@ -213,7 +213,7 @@ int Server::serveError(Request &request, short error) const {
  */
 int Server::serveDefaultError(Request &request, const string &status) const {
     string msg("<!DOCTYPE html><html><head><title>");
-    msg += status + "</title></head><body><h1>";
+    msg += status + "</title></head><body style=\"background-color: #3a383d;\"><h1 style=\"text-align: center;\">";
     msg += status + "</h1></body></html>";
     request.generateResponse(status, "text/html", msg);
     request.sendResponse();

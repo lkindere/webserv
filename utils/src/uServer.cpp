@@ -39,7 +39,7 @@ string generateRandom(int n) {
  * @return int 1 on true 0 on false
  */
 int isCGI(const vector<string>& cgi_extensions, const string& path){
-    size_t i = path.find('.');
+    size_t i = path.rfind('.');
     if (i == path.npos)
         return 0;
     for (size_t j = 0; j < cgi_extensions.size(); ++j) {
@@ -50,7 +50,7 @@ int isCGI(const vector<string>& cgi_extensions, const string& path){
 }
 
 string getPathInfo(const string& path) {
-    size_t i = path.find('.');
+    size_t i = path.rfind('.');
     if (i == path.npos)
         return string();
     i = path.find('/', i);
@@ -60,7 +60,7 @@ string getPathInfo(const string& path) {
 }
 
 string removePathInfo(const string& path) {
-    size_t i = path.find('.');
+    size_t i = path.rfind('.');
     if (i == path.npos)
         return string();
     i = path.find('/', i);
