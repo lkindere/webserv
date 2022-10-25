@@ -29,7 +29,7 @@ private:
     int serve(Request& request);
     int checkclose(pollfd& pfd);
     int rebuild();
-    const Server *getServer(Request &request);
+    Server *getServer(Request &request);
     //Terminal
     void terminalHandler(int fd);
 

@@ -201,7 +201,7 @@ int Webserv::rebuild() {
  * @return int 0 on success -1 on error
  */
 int Webserv::serve(Request& request) {
-    const Server *server(getServer(request));
+    Server *server(getServer(request));
     if (server == NULL)
         throw("SHOULDN'T HAPPEN");
     return server->serve(request);
@@ -213,8 +213,8 @@ int Webserv::serve(Request& request) {
  * @param request 
  * @return Server* server or NULL if not found
  */
-const Server *Webserv::getServer(Request &request) {
-    const Server *first = NULL;
+Server *Webserv::getServer(Request &request) {
+    Server *first = NULL;
     pair< string, short > host(getHost(request.fd()));
     for (size_t i = 0; i < _servers.size(); ++i) {
         if (_servers[i].host() != host.first || _servers[i].port() != host.second)

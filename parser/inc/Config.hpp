@@ -28,17 +28,20 @@ struct GlobalConfig {
  * @param autoindex: enable directory listing
  * @param redirect: redirect path
  * @param uploads: upload path, if not set uploads disabled
+ * @param authentication: authentication level required to access location
  * @param methods: allowed methods for this location
  * @param cgi_extensions: files with .extension will be executed as CGI
  * @param list_directories: if true list directories
  */
 struct LocationConfig {
+    LocationConfig() : autoindex(false), authentication(0) {}
     std::string uri;
     std::string root;
     std::string index;
     bool autoindex;
     std::string redirect;
     std::string uploads;
+    int authentication;
     std::vector< e_method > methods;
     std::vector< std::string > cgi_extensions;
 };

@@ -5,6 +5,7 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include "Sessions.hpp"
 
 class Location {
 public:
@@ -17,6 +18,7 @@ public:
     bool autoindex() const { return _config.autoindex; }
     const std::string &redirect() const { return _config.redirect; }
     const std::string &uploads() const { return _config.uploads; }
+    int authentication() const { return _config.authentication; }
     const std::vector< e_method > &methods() const { return _config.methods; }
     const std::vector<std::string>& cgi_extensions() const { return _config.cgi_extensions; }
 
@@ -29,13 +31,13 @@ class Server {
 public:
     Server(GlobalConfig *global, const ServerConfig &conf);
 
-    int serve(Request &request) const;
+    int serve(Request &request);
 
 private:
     //Server
-    int serveRoot(Request &request) const;
-    int serveLocation(Request &request, const Location &location) const;
-    int serveDirectory(Request &request, const Location &location) const;
+    int serveRoot(Request &request);
+    int serveLocation(Request &request, const Location &location);
+    int serveDirectory(Request &request, const Location &location);
     int serveRedirect(Request& request, const Location& location) const;
     int serveAutoindex(Request& request, const Location& location, const std::string& path) const;
     int serveCGI(Request& request, const std::string& path) const;
@@ -44,10 +46,12 @@ private:
 
     //ServerMethods
     int mget(Request &request, const std::string &path) const;
-    int mpost(Request &request, const Location& location) const;
+    int mpost(Request &request, const Location& location);
     int mdelete(Request &request, const std::string &path) const;
     //ServerUpload
     int multipartUploader(Request& request, const Location& location) const;
+    //ServerRegister
+    int registration(Request& request, const Location& location);
 
 public:
     //ServerMisc
@@ -66,5 +70,6 @@ public:
 private:
     GlobalConfig *_global;
     ServerConfig _config;
+    Sessions _sessions;
     std::vector< Location > _locations;
 };

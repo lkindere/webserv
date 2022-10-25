@@ -39,6 +39,7 @@ static vector< string > tokenStr() {
     tstr.push_back("redirect");
     tstr.push_back("index");
     tstr.push_back("autoindex");
+    tstr.push_back("authentication");
     return tstr;
 }
 
@@ -50,10 +51,8 @@ static vector< string > tokenStr() {
 static deque< Token > tokenize(const string &line) {
     deque< Token > tokens;
     vector< string > tstr(tokenStr());
-    deque< string > segments(split(line, " ", true)); //Changed to no empty line split, if errors revert + uncomment line
+    deque< string > segments(split(line, " ", true));
     for (size_t j = 0; j < segments.size(); ++j) {
-        // if (segments[j].length() == 0)
-        //     continue;
         for (size_t k = 0; k < tstr.size() + 1; ++k) {
             if (k == tstr.size())
                 tokens.push_back(Token(VALUE, segments[j]));
@@ -208,14 +207,6 @@ static int addLocation(deque< Line > &lines, ServerConfig &server, ConfigData &c
     LocationConfig location;
     location.uri = lines[0].tokens[1].value;
     lines.pop_front();
-#ifdef DEBUG
-    cerr << "\n===============LOCATION:===============";
-    for (deque< Line >::const_iterator it = lines.begin(); it != lines.end(); ++it) {
-        cerr << "\nLine: " << it->index << std::endl;
-        for (deque< Token >::const_iterator tkn = it->tokens.begin(); tkn != it->tokens.end(); ++tkn)
-            cerr << "Token type: " << tkn->type << " value: " << tkn->value << std::endl;
-    }
-#endif
     while (lines.size() != 0) {
         deque< Token > &tokens = lines[0].tokens;
         switch (tokens[0].type) {
@@ -253,6 +244,15 @@ static int addLocation(deque< Line > &lines, ServerConfig &server, ConfigData &c
                 if (noSemicolon(tokens[1].value) == "on")
                     location.autoindex = true;
                 else
+                    return setError(conf, lines[0].index, "Invalid value");
+                lines.pop_front();
+                break;
+            }
+            case AUTHENTICATION: {
+                if (tokens.size() != 2)
+                    return setError(conf, lines[0].index, "Invalid format");
+                location.authentication = atoll(noSemicolon(tokens[1].value).data());
+                if (location.authentication < 0)
                     return setError(conf, lines[0].index, "Invalid value");
                 lines.pop_front();
                 break;

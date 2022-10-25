@@ -13,6 +13,7 @@ using namespace std;
 
 Request::Request(int fd, size_t max_size)
     : _fd(fd) {
+    _info.authentication = 0;
     _status.status = READING;
     _status.headers_parsed = false;
     _status.content_unchunked = false;
@@ -47,6 +48,10 @@ void Request::init(const string& input) {
     for (map< string, string >::const_iterator it = _content.headers.begin();
         it != _content.headers.end(); ++it)
         cout << it->first << " , " << it->second << '\n';
+    cout << "Cookies:\n";
+    for (vector<pair<string, string> >::const_iterator it = _content.cookies.begin();
+        it != _content.cookies.end(); ++it)
+        cout << "Cookie: " << it->first << " val: " << it->second << '\n';
     cout << "\nContent length: " << _content.contentlength << '\n';
     cout << "Message length: " << _content.message.length() << '\n';
     cout << "Content types: ";
@@ -148,7 +153,6 @@ void Request::parseHeaders(deque< string > &lines) {
         deque< string > current(split(lines.front(), ": "));
         if (current.size() != 2)
             return setError(400);
-        addHeader(current);
         if (current[0] == "Host")
             _info.host = split(current[1], ":")[0];
         else if (current[0] == "Content-Length"){
@@ -180,6 +184,13 @@ void Request::parseHeaders(deque< string > &lines) {
                 _content.encoding = segment[i];
             }
         }
+        else if (current[0] == "Cookie") {
+            deque<string> keyval = split(current[1], "=", true);
+            if (keyval.size() == 2)
+                _content.cookies.push_back(make_pair(keyval[0], keyval[1]));
+        }
+        else
+            addHeader(current);
         lines.pop_front();
     }
     if (_info.host.length() == 0)

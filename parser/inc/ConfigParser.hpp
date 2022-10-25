@@ -22,7 +22,8 @@ enum e_token {
     REDIRECT = 11,
     INDEX = 12,
     AUTO_INDEX = 13,
-    VALUE = 14
+    AUTHENTICATION = 14,
+    VALUE = 15
 };
 
 struct Token {

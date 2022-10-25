@@ -13,6 +13,7 @@ string getStatus(short error) {
     map< short, string > status;
     status.insert(make_pair(301, "301 Moved Permanently"));
     status.insert(make_pair(400, "400 Bad Request"));
+    status.insert(make_pair(401, "401 Unauthorized"));
     status.insert(make_pair(403, "403 Forbidden"));
     status.insert(make_pair(404, "404 Not Found"));
     status.insert(make_pair(405, "405 Method Not Allowed"));

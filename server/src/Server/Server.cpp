@@ -5,9 +5,9 @@
 #include <sstream>
 #include <stdio.h>
 
-#ifdef DEBUG
+// #ifdef DEBUG
     #include <iostream>
-#endif
+// #endif
 
 #include "Server.hpp"
 #include "uServer.hpp"
@@ -30,9 +30,17 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
  * @param request 
  * @return int 0 on success
  */
-int Server::serve(Request &request) const {
+int Server::serve(Request &request) {
     if (request.method() == INVALID)
         return serveError(request, request.error());
+    cout << "NUMBER OF COOKIES: " << request.cookies().size() << endl;
+    for (vector<pair<string, string> >::const_iterator it = request.cookies().begin();
+        it != request.cookies().end(); ++it) {
+        int level = _sessions.validCookie(it->first, it->second);
+        if (level > request.authentication())
+            request.setAuthentication(level);
+    }
+    cout << "Request authorisation set to: " << request.authentication();
     const Location *location(getLocation(request.uri()));
     if (location == NULL)
         return serveRoot(request);
@@ -44,7 +52,7 @@ int Server::serve(Request &request) const {
  * @param request 
  * @return int 0 on success
  */
-int Server::serveRoot(Request &request) const {
+int Server::serveRoot(Request &request) {
     string path(getCWD() + root() + request.uri());
     if (request.method() == GET)
         return mget(request, path);
@@ -59,8 +67,10 @@ int Server::serveRoot(Request &request) const {
  * @param location 
  * @return int 0 on success
  */
-int Server::serveLocation(Request &request, const Location &location) const {
+int Server::serveLocation(Request &request, const Location &location) {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
+    if (request.authentication() < location.authentication())
+        return serveError(request, 401);
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
     if (location.redirect().length() != 0)
@@ -123,7 +133,7 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
  * @param location 
  * @return int 0 on success
  */
-int Server::serveDirectory(Request &request, const Location &location) const {
+int Server::serveDirectory(Request &request, const Location &location) {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (path[path.length() - 1] != '/')
         path += "/";

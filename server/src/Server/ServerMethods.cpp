@@ -7,6 +7,7 @@
 #endif
 
 #include "Server.hpp"
+#include "uString.hpp"
 #include "uServer.hpp"
 #include "Types.hpp"
 
@@ -35,16 +36,50 @@ int Server::mget(Request &request, const string& path) const {
     return 0;
 }
 
+int Server::registration(Request& request, const Location& location) {
+    if (location.autoindex())
+        ;
+    if (request.message().length() < request.contentlength())
+        return 0;
+    deque<string> vars = split(request.message(), "&", true);
+    if (vars.size() < 2 || vars.size() > 3)
+        return serveError(request, 500); //Invalid input
+    deque<string> user = split(vars[0], "=", true);
+    deque<string> pass = split(vars[1], "=", true);
+    int level = 0;
+    if (vars.size() == 3) {
+        deque<string> lvl = split(vars[2], "=", true);
+        if (lvl.size() != 2)
+            return serveError(request, 500); //Invalid input
+        level = atoi(lvl[1].data());
+        if (level < 0)
+            return serveError(request, 500); //Invalid input
+    }
+    if (user.size() != 2 || pass.size() != 2)
+        return serveError(request, 500);
+    if (_sessions.addUser(user[1], pass[1], level) == false)
+        return serveError(request, 500); //Already exists
+    vector<string> headers;
+    headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(level));
+    request.generateResponse("200 OK", "text/html", "User created", headers);
+    request.sendResponse();
+    return 0;
+}
+
 /**
- * @brief Only handles the "builtin" server multipart uploader
+ * @brief Only handles the "builtin" multipart uploader and registration form data
  * @param request 
  * @param location 
  * @return int 
  */
-int Server::mpost(Request& request, const Location& location) const {
+int Server::mpost(Request& request, const Location& location) {
     const set<string>& types = request.types();
-    if (types.find("multipart/form-data") != types.end())
+    if (types.find("multipart/form-data") != types.end()
+        && request.uri() == "/upload.html")
         return multipartUploader(request, location);
+    if (types.find("application/x-www-form-urlencoded") != types.end()
+        && request.uri() == "/register.html")
+        return registration(request, location);
     return serveError(request, 403);
 }
 

@@ -33,6 +33,7 @@ struct reqInfo
     std::string query;
     std::string protocol;
     std::string host;
+    int authentication;
 };
 
 struct reqContent
@@ -46,6 +47,7 @@ struct reqContent
     std::string encoding;
     std::set< std::string> types;
     std::map<std::string, std::string>  headers;
+    std::vector<std::pair<std::string, std::string> > cookies;
     std::string message;
 };
 
@@ -78,9 +80,12 @@ public:
     const std::set< std::string > &types() const { return _content.types; }
     const std::map<std::string, std::string>& headers() const { return _content.headers; }
     const std::map<std::string, std::string>& forms() const { return _forms.forms; }
-   
+    const std::vector<std::pair<std::string, std::string> >& cookies() { return _content.cookies; }
+    int                 authentication() const { return _info.authentication; }
+
     std::string         getHeader(const std::string& header) const;
     void                setPosted(size_t len) { _content.postedlength = len; }
+    void                setAuthentication(int level) { _info.authentication = level; }
 
     void                readRequest();
     void                sendResponse();
