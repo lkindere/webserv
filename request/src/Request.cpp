@@ -63,7 +63,7 @@ void Request::readRequest() {
         if (bytes_read <= 0)
             return;
         _content.message.append(buffer, 0, bytes_read);
-        size_t msgstart = _content.message.rfind("\r\n\r\n");
+        size_t msgstart = _content.message.find("\r\n\r\n");
         if (msgstart == string::npos)
             return;
         init(_content.message.substr(0, msgstart));

@@ -27,7 +27,7 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
 
 /**
  * @brief Sends a response based on request
- * @param request 
+ * @param request
  * @return int 0 on success
  */
 int Server::serve(Request &request) const {
@@ -41,7 +41,7 @@ int Server::serve(Request &request) const {
 
 /**
  * @brief Serves from root path of server
- * @param request 
+ * @param request
  * @return int 0 on success
  */
 int Server::serveRoot(Request &request) const {
@@ -55,8 +55,8 @@ int Server::serveRoot(Request &request) const {
 
 /**
  * @brief Serves from server location
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int 0 on success
  */
 int Server::serveLocation(Request &request, const Location &location) const {
@@ -80,13 +80,13 @@ int Server::serveLocation(Request &request, const Location &location) const {
 
 /**
  * @brief Will serve CGI
- * @param request 
- * @param path 
- * @return int 
+ * @param request
+ * @param path
+ * @return int
  */
 int Server::serveCGI(Request& request, const string& fullpath) const {
     static map<int, pair<FILE*, FILE*> > filebuffers;
-    string path = fullpath.substr(0, fullpath.rfind(getPathInfo(fullpath)));
+    string path = fullpath.substr(0, fullpath.find(getPathInfo(fullpath)));
     if (access(path.data(), F_OK) != 0)
         return serveError(request, 404);
     if (access(path.data(), X_OK) != 0)
@@ -119,8 +119,8 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
 
 /**
  * @brief Serves a directory if index is set or autoindex is on
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int 0 on success
  */
 int Server::serveDirectory(Request &request, const Location &location) const {
@@ -141,8 +141,8 @@ int Server::serveDirectory(Request &request, const Location &location) const {
 
 /**
  * @brief Sends a 301 redirect, creates location header
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int always 0 for now
  */
 int Server::serveRedirect(Request& request, const Location& location) const {
@@ -155,7 +155,7 @@ int Server::serveRedirect(Request& request, const Location& location) const {
 
 /**
  * @brief Serves a basic autoindex listing
- * @param request 
+ * @param request
  * @param path full filepath for reading
  * @return int 0 on success
  */
@@ -180,7 +180,7 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
 
 /**
  * @brief Serves an error page
- * @param request 
+ * @param request
  * @param error errorcode
  * @return int 0 on success
  */
@@ -207,8 +207,8 @@ int Server::serveError(Request &request, short error) const {
 
 /**
  * @brief Sends a default errorpage based on error code
- * @param request 
- * @param status 
+ * @param request
+ * @param status
  * @return int 0 on success
  */
 int Server::serveDefaultError(Request &request, const string &status) const {

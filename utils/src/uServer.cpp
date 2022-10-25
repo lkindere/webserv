@@ -12,8 +12,8 @@ using namespace std;
 
 /**
  * @brief Generates n amount of alphanumeric chars
- * @param n 
- * @return string 
+ * @param n
+ * @return string
  */
 string generateRandom(int n) {
     srand(time(NULL));
@@ -34,12 +34,12 @@ string generateRandom(int n) {
 
 /**
  * @brief Returns 1 if path.extension matches cgi extensions
- * @param cgi_extensions 
- * @param path 
+ * @param cgi_extensions
+ * @param path
  * @return int 1 on true 0 on false
  */
 int isCGI(const vector<string>& cgi_extensions, const string& path){
-    size_t i = path.rfind('.');
+    size_t i = path.find('.');
     if (i == path.npos)
         return 0;
     for (size_t j = 0; j < cgi_extensions.size(); ++j) {
@@ -50,7 +50,7 @@ int isCGI(const vector<string>& cgi_extensions, const string& path){
 }
 
 string getPathInfo(const string& path) {
-    size_t i = path.rfind('.');
+    size_t i = path.find('.');
     if (i == path.npos)
         return string();
     i = path.find('/', i);
@@ -60,7 +60,7 @@ string getPathInfo(const string& path) {
 }
 
 string removePathInfo(const string& path) {
-    size_t i = path.rfind('.');
+    size_t i = path.find('.');
     if (i == path.npos)
         return string();
     i = path.find('/', i);
@@ -71,7 +71,7 @@ string removePathInfo(const string& path) {
 
 /**
  * @brief Checks if path is a directory
- * @param path 
+ * @param path
  * @return int 1 on directory 0 if not
  */
 int isDirectory(const string &path) {
@@ -82,7 +82,7 @@ int isDirectory(const string &path) {
 
 /**
  * @brief Returns current working dir
- * @return string 
+ * @return string
  */
 string getCWD() {
     char* cwd = getcwd(NULL, 0);
@@ -93,8 +93,8 @@ string getCWD() {
 
 /**
  * @brief Returns a IP from socket fd (CLIENT)
- * @param sock_fd 
- * @return string 
+ * @param sock_fd
+ * @return string
  */
 string getPeer(int sock_fd) {
     sockaddr_in addr;
@@ -112,8 +112,8 @@ string getPeer(int sock_fd) {
 
 /**
  * @brief Returns a IP:port pair from socket fd (SERVER)
- * @param sock_fd 
- * @return std::pair< std::string, short > 
+ * @param sock_fd
+ * @return std::pair< std::string, short >
  */
 pair< string, short > getHost(int sock_fd) {
     sockaddr_in addr;
@@ -150,8 +150,8 @@ string generateLocationURI(const string &root, const string &location, const str
 
 /**
  * @brief Basically just cuts off the CWD part
- * @param fullpath 
- * @return string 
+ * @param fullpath
+ * @return string
  */
 string getScriptname(const string& fullpath) {
     string cwd = getCWD();

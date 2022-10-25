@@ -6,8 +6,8 @@ using namespace std;
 
 /**
  * @brief Returns status string based on error code
- * @param error 
- * @return string 
+ * @param error
+ * @return string
  */
 string getStatus(short error) {
     map< short, string > status;
@@ -104,11 +104,11 @@ static string howDoMimesWork(const string& extension) {
 
 /**
  * @brief Gets file type from path
- * @param path 
- * @return string 
+ * @param path
+ * @return string
  */
 string getType(const string& path){
-    size_t i = path.rfind('.');
+    size_t i = path.find('.');
     if (i == path.npos)
         return "text/plain";
     return howDoMimesWork(path.substr(i));

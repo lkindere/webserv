@@ -25,7 +25,7 @@ static string getFilename(const string& message) {
 }
 
 static void appendBeforeExtension(string& filename, const string& append) {
-    size_t i = filename.rfind('.');
+    size_t i = filename.find('.');
     if (i == filename.npos)
         filename += append;
     else
@@ -40,9 +40,9 @@ static string generateUploadMessage(const string& filename, const string& upload
 
 /**
  * @brief Uploads a multipart/form file to request URI
- * @param request 
- * @param path 
- * @return int 
+ * @param request
+ * @param path
+ * @return int
  */
 int Server::multipartUploader(Request& request, const Location& location) const {
     if (request.message().length() == 0 && request.contentlength() != 0){
