@@ -33,8 +33,8 @@ static void appendBeforeExtension(string& filename, const string& append) {
 }
 
 static string generateUploadMessage(const string& filename, const string& uploadpath) {
-    string message("<!DOCTYPE html><html><head><title>201 Created</title></head><body><h1>201 Created</h1>");
-    message += "<p><a href=\"" + uploadpath + "/" + filename + "\">" + filename + "</a></p></body></html>";
+    string message("<!DOCTYPE html><html><head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>201 Created</title></head><body style=\"background-color: #3a383d;color: black;\"><h1 style=\"text-align: center;\">201 Created</h1>");
+    message += "<p style\"text-align: center;\"><a href=\"" + uploadpath + "/" + filename + "\" style=\"color: #d0b8de;\" >" + filename + "</a></p></body></html>";
     return message;
 }
 
