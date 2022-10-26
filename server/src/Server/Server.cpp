@@ -84,6 +84,7 @@ int Server::serveLocation(Request &request, const Location &location) const {
  * @param path
  * @return int
  */
+#include <iostream>
 int Server::serveCGI(Request& request, const string& fullpath) const {
     static map<int, pair<FILE*, FILE*> > filebuffers;
     string path = fullpath.substr(0, fullpath.rfind(getPathInfo(fullpath)));
@@ -99,19 +100,23 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
     Cgi cgi(generateENV(request, fullpath));
     if (cgi.execute(path, it->second.first, it->second.second) != 0){
         removeFilebuffer(filebuffers, it);
+		std::cout << "what\n";
         return serveError(request, 500);
     }
     string message;
     map<string, string> headers;
     if (parseResponse(message, headers, it->second.second) != 0) {
         removeFilebuffer(filebuffers, it);
+        std::cout << "is\n";
         return serveError(request, 500);
     }
     removeFilebuffer(filebuffers, it);
     request.setStatus(RESPONDING);
     map<string, string>::const_iterator type = headers.find("Content-Type");
-    if (type == headers.end())
+    if (type == headers.end()) {
+        std::cout << "this\n";
         return serveError(request, 500);
+	}
     request.generateResponse("200 OK", type->second, message);
     request.sendResponse();
     return 0;
