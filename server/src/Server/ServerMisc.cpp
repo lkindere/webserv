@@ -4,10 +4,6 @@
 #include <algorithm>
 #include <stdlib.h>
 
-// #ifdef DEBUG
-    #include <iostream>
-// #endif
-
 #include "Server.hpp"
 #include "uServer.hpp"
 #include "uString.hpp"
@@ -40,7 +36,6 @@ const Location *Server::getLocation(const string &uri) const {
     for (size_t i = 0; i < _locations.size(); ++i) {
         deque< string > loc(split(_locations[i].uri(), "/", true));
         pair<size_t, size_t> match = getMatches(loc, path);
-        cout << "LOC: " << _locations[i].uri() << " matches: " << match.first << " mismatches: " << match.second << endl;
         if (match.first > current.first
             || (match.first == current.first && match.second < current.second)) {
             ptr = &_locations[i];
@@ -48,6 +43,19 @@ const Location *Server::getLocation(const string &uri) const {
         }
     }
     return ptr;
+}
+
+string getUser(const Request& request, const Sessions& sessions) {
+    for (vector<pair<string, string> >::const_iterator it = request.cookies().begin();
+        it != request.cookies().end(); ++it) {
+        if (it->first == "PotatoServUSER") {
+            const User* user = sessions.getUserByCookie(it->second);
+            if (user == NULL)
+                return string();
+            return user->username();
+        }
+    }
+    return string();
 }
 
 /**
@@ -76,17 +84,10 @@ vector<string> Server::generateENV(const Request& request, const string& path) c
     env.push_back(string("HTTP_REFERER") + "=" + request.getHeader("Referer"));
     env.push_back(string("PATH_INFO") + "=" + getPathInfo(path));
     env.push_back(string("PATH_TRANSLATED") + "= " + path);
+    env.push_back(string("REMOTE_USER") + "=" + getUser(request, _sessions));
     
     env.push_back(string("REMOTE_HOST") + "=" + "");
     env.push_back(string("AUTH_TYPE") + "=" + "");
-    env.push_back(string("REMOTE_USER") + "=" + "");
     env.push_back(string("REMOTE_IDENT") + "=" + "");
-
-
-    cout << "\n---ENV:---\n";
-    for (vector<string>::const_iterator it = env.begin();
-        it != env.end(); ++it)
-        cout << *it << '\n';
-    cout << endl;
     return env;
 }

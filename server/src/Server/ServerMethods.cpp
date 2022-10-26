@@ -2,10 +2,6 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef DEBUG
-    #include <iostream>
-#endif
-
 #include "Server.hpp"
 #include "uString.hpp"
 #include "uServer.hpp"

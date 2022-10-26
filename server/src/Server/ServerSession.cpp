@@ -3,14 +3,6 @@
 
 using namespace std;
 
-int Server::serveCustom(Request& request, const string& status, const string& message) const {
-    string ret = "<!DOCTYPE html><html><head><title>Error</title></head><body><h1>";
-    ret += message + "</h1></body></html>";
-    request.generateResponse(status, "text/html", ret);
-    request.sendResponse();
-    return 0;
-}
-
 int Server::registration(Request& request, const Location& location) {
     if (location.autoindex())
         ;
@@ -41,7 +33,7 @@ int Server::registration(Request& request, const Location& location) {
     if (_sessions.addUser(user[1], pass[1], level) == false) 
         return serveCustom(request, "401 Unauthorized", "This username already exists");
     vector<string> headers;
-    headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(level));
+    headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(user[1]));
     request.generateResponse("200 OK", "text/html", "User created", headers);
     request.sendResponse();
     return 0;
@@ -65,7 +57,7 @@ int Server::login(Request& request, const Location& location) {
     if (user->login(password[1]) == false)
         return serveCustom(request, "401 Unauthorized", "Invalid password");
     vector<string> headers;
-    headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(user->level()));
+    headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(username[1]));
     request.generateResponse("200 OK", "text/html", "Login successful", headers);
     request.sendResponse();
     return 0;

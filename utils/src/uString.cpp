@@ -38,13 +38,6 @@ deque< string > split(const string &str, const string &delim, bool noempty) {
  * @return pair<matches, mismatches>
  */
 pair<size_t, size_t> getMatches(deque< string > &d1, deque< string > &d2) {
-    cout << "LOC: ";
-    for (size_t i = 0; i < d1.size(); ++i)
-        cout << d1[i] << ' ';
-    cout << "\nPATH: ";
-    for (size_t i = 0; i < d2.size(); ++i)
-        cout << d2[i] << ' ';
-    cout << endl;
     size_t matches = 0;
     size_t mismatches = 0;
     for (size_t i = 0; i < d1.size() && i < d2.size(); ++i) {

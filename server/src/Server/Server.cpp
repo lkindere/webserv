@@ -5,9 +5,9 @@
 #include <sstream>
 #include <stdio.h>
 
-// #ifdef DEBUG
+#ifdef DEBUG
     #include <iostream>
-// #endif
+#endif
 
 #include "Server.hpp"
 #include "uServer.hpp"
@@ -226,4 +226,19 @@ int Server::serveDefaultError(Request &request, const string &status) const {
     request.generateResponse(status, "text/html", msg);
     request.sendResponse();
 	return 0;
+}
+
+/**
+ * @brief Custom status and message
+ * @param request 
+ * @param status 
+ * @param message 
+ * @return int 
+ */
+int Server::serveCustom(Request& request, const string& status, const string& message) const {
+    string ret = "<!DOCTYPE html><html><head><title>Error</title></head><body><h1>";
+    ret += message + "</h1></body></html>";
+    request.generateResponse(status, "text/html", ret);
+    request.sendResponse();
+    return 0;
 }

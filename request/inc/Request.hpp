@@ -80,7 +80,7 @@ public:
     const std::set< std::string > &types() const { return _content.types; }
     const std::map<std::string, std::string>& headers() const { return _content.headers; }
     const std::map<std::string, std::string>& forms() const { return _forms.forms; }
-    const std::vector<std::pair<std::string, std::string> >& cookies() { return _content.cookies; }
+    const std::vector<std::pair<std::string, std::string> >& cookies() const { return _content.cookies; }
     int                 authentication() const { return _info.authentication; }
 
     std::string         getHeader(const std::string& header) const;

@@ -12,6 +12,8 @@ class User
             : _username(user), _password(pass), _level(level) {}
 
         bool login(const std::string& pass) const { return pass == _password; }
+
+        const std::string& username() const { return _username; }
         int level() const { return _level; }
         void setLevel(int level) { _level = level; }
     
@@ -35,14 +37,15 @@ class Sessions
     public:
         Sessions() {}
         
-        const std::string& generateCookie(int level = 1);
+        std::string        generateCookie(const std::string& username);
         int                validCookie(const std::string& key, const std::string& value) const;
         bool               removeCookie(const std::string& key);
 
         bool               addUser(const std::string& user, const std::string& pass, int level = 0);
         const User*        getUser(const std::string& user) const;
+        const User*        getUserByCookie(const std::string& cookie) const;
 
     private:
         std::set<User> _users;
-        std::map<std::string, int> _cookies;
+        std::map<std::string, std::string> _cookies;
 };

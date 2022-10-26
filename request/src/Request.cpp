@@ -229,9 +229,6 @@ void Request::generateResponse(const string &status, const string &type, const s
     _response = ss.str();
     _content.responselength = _response.length();
     _status.status = RESPONDING;
-#ifdef DEBUG
-    cout << "\n\nGENERATED RESPONSE:\n" << _response << "\n\n" << endl;
-#endif
 }
 
 string Request::getHeader(const string& header) const {

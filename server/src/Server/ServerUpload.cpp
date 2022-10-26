@@ -4,10 +4,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef DEBUG
-    #include <iostream>
-#endif
-
 #include "Server.hpp"
 #include "uServer.hpp"
 
@@ -71,11 +67,6 @@ int Server::multipartUploader(Request& request, const Location& location) const 
         return serveError(request, 500);
     file.write(&request.message()[start], end - start);
     request.setPosted(request.postedlength() + request.message().length());
-#ifdef DEBUG
-    cout << "CONTENT LEN: " << request.contentlength() << std::endl;
-    cout << "READ LEN   : " << request.readlength() << std::endl;
-    cout << "POSTED LEN: " << request.postedlength() << std::endl;
-#endif
     if (request.postedlength() >= request.contentlength()){
         string message = generateUploadMessage(filenames[request.fd()], location.uploads());
         request.generateResponse("201 Created", "text/html", message);

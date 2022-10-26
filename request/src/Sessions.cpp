@@ -4,14 +4,17 @@
 using namespace std;
 
 /**
- * @brief Generates a random cookie and returns it
+ * @brief Generates a random cookie and returns it, returns empty string if no such user
  * @return const string& 
  */
-const string& Sessions::generateCookie(int level) {
+string Sessions::generateCookie(const string& username) {
+    const User* user = getUser(username);
+    if (user == NULL)
+        return string();
     string cookie = generateRandom(100);
     while (_cookies.find(cookie) != _cookies.end())
         cookie = generateRandom(100);
-    return _cookies.insert(make_pair(cookie, level)).first->first;
+    return _cookies.insert(make_pair(cookie, username)).first->first;
 }
 
 #include <iostream>
@@ -23,14 +26,15 @@ const string& Sessions::generateCookie(int level) {
  * @return false 
  */
 int Sessions::validCookie(const string& key, const string& value) const {
-    for (map<string, int>::const_iterator it = _cookies.begin(); it != _cookies.end(); ++it)
-        cout << "Cookie available: " << it->first << " level: " << it->second << endl;
-    cout << "Checking cookie:\n" "key: " << key << "\nvalue: " << value << "\n\n";
     if (key != "PotatoServUSER")
         return 0;
-    map<string, int>::const_iterator it = _cookies.find(value);
-    if (it != _cookies.end())
-        return it->second;
+    map<string, string>::const_iterator it = _cookies.find(value);
+    if (it != _cookies.end()) {
+        const User* user = getUser(it->second);
+        if (user == NULL)
+            return 0;
+        return user->level();
+    }
     return 0;
 }
 
@@ -66,4 +70,11 @@ const User* Sessions::getUser(const std::string& user) const {
     if (it == _users.end())
         return NULL;
     return &(*it);
+}
+
+const User* Sessions::getUserByCookie(const std::string& cookie) const {
+    map<string, string>::const_iterator it = _cookies.find(cookie);
+    if (it == _cookies.end())
+        return NULL;
+    return getUser(it->second);
 }
