@@ -43,14 +43,18 @@ private:
     int serveCGI(Request& request, const std::string& path) const;
     int serveError(Request &request, short error) const;
     int serveDefaultError(Request &request, const std::string &status) const;
+    int serveCustom(Request& request, const std::string& status, const std::string& message) const;
 
     //ServerMethods
     int mget(Request &request, const std::string &path) const;
     int mpost(Request &request, const Location& location);
     int mdelete(Request &request, const std::string &path) const;
+
     //ServerUpload
     int multipartUploader(Request& request, const Location& location) const;
-    //ServerRegister
+
+    //ServerSessions
+    int login(Request& request, const Location& location);
     int registration(Request& request, const Location& location);
 
 public:

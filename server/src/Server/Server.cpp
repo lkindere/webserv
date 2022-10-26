@@ -33,14 +33,12 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
 int Server::serve(Request &request) {
     if (request.method() == INVALID)
         return serveError(request, request.error());
-    cout << "NUMBER OF COOKIES: " << request.cookies().size() << endl;
     for (vector<pair<string, string> >::const_iterator it = request.cookies().begin();
         it != request.cookies().end(); ++it) {
         int level = _sessions.validCookie(it->first, it->second);
         if (level > request.authentication())
             request.setAuthentication(level);
     }
-    cout << "Request authorisation set to: " << request.authentication();
     const Location *location(getLocation(request.uri()));
     if (location == NULL)
         return serveRoot(request);
@@ -70,7 +68,7 @@ int Server::serveRoot(Request &request) {
 int Server::serveLocation(Request &request, const Location &location) {
     string path(generateLocationURI(location.root(), location.uri(), request.uri()));
     if (request.authentication() < location.authentication())
-        return serveError(request, 401);
+        return serveCustom(request, "401 Unauthorized", "Your access level is too low to visit this page");
     if (validMethod(location.methods(), request.method()) == 0)
         return serveError(request, 405);
     if (location.redirect().length() != 0)
