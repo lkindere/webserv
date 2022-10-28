@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/wait.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "Cgi.hpp"
 #include "Request.hpp"

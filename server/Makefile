@@ -61,14 +61,14 @@ $(CGI_LIB):
 
 $(BIN): $(OBJECTS)
 	@printf "$(shell tput setaf 2)Compiling [$(BIN)]$(shell tput sgr0)\n"
-	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 -include $(DEPENDS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION) Makefile
+$(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION)
 	@printf "$(shell tput setaf 2)Compiling [$<]$(shell tput sgr0)\n"
 	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 	@mv $(@:.o=.d) $(BUILDDIR)
 
 # Cleaning Rules #

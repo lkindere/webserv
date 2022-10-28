@@ -1,11 +1,12 @@
 #include "Server.hpp"
 #include "uString.hpp"
+#include <cstdlib>
 
 using namespace std;
 
 int Server::registration(Request& request, const Location& location) {
     if (location.autoindex())
-        ;
+        {;}
     if (request.message().length() < request.contentlength())
         return 0;
     deque<string> vars = split(request.message(), "&", true);
@@ -41,7 +42,7 @@ int Server::registration(Request& request, const Location& location) {
 
 int Server::login(Request& request, const Location& location) {
     if (location.autoindex())
-        ;
+        {;}
     if (request.message().length() < request.contentlength())
         return 0;
     deque<string> vars = split(request.message(), "&", true);

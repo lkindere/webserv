@@ -4,6 +4,7 @@
 
 #include "Webserv.hpp"
 #include "uServer.hpp"
+#include <cstdlib>
 
 using namespace std;
 

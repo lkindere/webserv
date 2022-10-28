@@ -3,6 +3,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <cstring>
 
 #include "Server.hpp"
 #include "uServer.hpp"
