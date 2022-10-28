@@ -30,7 +30,7 @@ int Server::registration(Request& request, const Location& location) {
         return serveCustom(request, "400 Bad Request", "Username must be at least 6 characters");
     if (pass[1].length() < 6)
         return serveCustom(request, "400 Bad Request", "Password must be at least 6 characters");
-    if (_sessions.addUser(user[1], pass[1], level) == false) 
+    if (_sessions.addUser(user[1], pass[1], level) == false)
         return serveCustom(request, "401 Unauthorized", "This username already exists");
     vector<string> headers;
     headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(user[1]));
@@ -58,7 +58,7 @@ int Server::login(Request& request, const Location& location) {
         return serveCustom(request, "401 Unauthorized", "Invalid password");
     vector<string> headers;
     headers.push_back(string("Set-Cookie: ") + "PotatoServUSER=" + _sessions.generateCookie(username[1]));
-    request.generateResponse("200 OK", "text/html", "Login successful", headers);
+    request.generateResponse("200 OK", "text/html", "<!DOCTYPE html> <html><head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>Autoindex</title></head><body style=\"background-color: #3a383d;color: black;\"><h1 style=\"text-align: center;\">Login successful</h1></body></html>", headers);
     request.sendResponse();
     return 0;
 }

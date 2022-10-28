@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html>
-<body>
-
+<head>
+	<link rel="stylesheet" href=".resources/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+</head>
+<body  style="background-color: #3a383d">
+<h1>Upload page</h1>
 <h2><object data="/user.py"></object></h2>
-
+<div class="imgcontainer">
 <form action="upload.html" method="POST" enctype="multipart/form-data">
-  <input type="file" name="upload" id="upload">
-  <input type="submit" value="Upload File">
-</form>
 
+  <input type="file" name="upload" id="upload">
+  <input type="submit" value="Upload file">
+
+</div>
+</form>
 </body>
 </html>

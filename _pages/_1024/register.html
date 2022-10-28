@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" href=".resources/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
 <title>Register</title>
 </head>
-<body>
-
+  <body style="background-color: #3a383d">
 <h1>Registration page</h1>
-<h2><object data="/user.py"></object></h2>
-
-<form action="register.html" method="post">
+<h2><object data=".resources/user.py"></object></h2>
+<form action="register.html" method="post" style="background-color:#737373">
     <label for="usename">Username</label>
-    <input type="text" id="username" name="username">
+    <input type="text" id="username" name="username" required>
     <label for="password">Password</label>
-    <input type="text" id="password" name="password">
+    <input type="password" id="password" name="password" required>
     <input type="submit" value="Submit">
     <label for="level">Access level</label>
     <input type="text" id="level" name="level">

@@ -27,7 +27,7 @@ Server::Server(GlobalConfig *global, const ServerConfig &conf)
 
 /**
  * @brief Sends a response based on request
- * @param request 
+ * @param request
  * @return int 0 on success
  */
 int Server::serve(Request &request) {
@@ -47,7 +47,7 @@ int Server::serve(Request &request) {
 
 /**
  * @brief Serves from root path of server
- * @param request 
+ * @param request
  * @return int 0 on success
  */
 int Server::serveRoot(Request &request) {
@@ -61,8 +61,8 @@ int Server::serveRoot(Request &request) {
 
 /**
  * @brief Serves from server location
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int 0 on success
  */
 int Server::serveLocation(Request &request, const Location &location) {
@@ -88,9 +88,9 @@ int Server::serveLocation(Request &request, const Location &location) {
 
 /**
  * @brief Will serve CGI
- * @param request 
- * @param path 
- * @return int 
+ * @param request
+ * @param path
+ * @return int
  */
 int Server::serveCGI(Request& request, const string& fullpath) const {
     static map<int, pair<FILE*, FILE*> > filebuffers;
@@ -127,8 +127,8 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
 
 /**
  * @brief Serves a directory if index is set or autoindex is on
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int 0 on success
  */
 int Server::serveDirectory(Request &request, const Location &location) {
@@ -149,8 +149,8 @@ int Server::serveDirectory(Request &request, const Location &location) {
 
 /**
  * @brief Sends a 301 redirect, creates location header
- * @param request 
- * @param location 
+ * @param request
+ * @param location
  * @return int always 0 for now
  */
 int Server::serveRedirect(Request& request, const Location& location) const {
@@ -163,7 +163,7 @@ int Server::serveRedirect(Request& request, const Location& location) const {
 
 /**
  * @brief Serves a basic autoindex listing
- * @param request 
+ * @param request
  * @param path full filepath for reading
  * @return int 0 on success
  */
@@ -173,12 +173,12 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
     if (dir == NULL)
         return serveError(request, 500);
     ss << "<!DOCTYPE html><html>";
-    ss << "<head><title>Autoindex</title></head><body>";
-    ss << "<h1>Index " << request.uri() << "</h1>";
-    for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)){
+    ss << "<head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>Autoindex</title></head><body style=\"background-color: #3a383d;color: black;\">";
+    ss << "<h1 style=\"text-align: center;\">Index " << request.uri() << "</h1>";
+    for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)) {
         string filename(ent->d_name);
         if (filename.size() > 0 && filename[0] != '.')
-            ss << "<p><a href=\"" << location.uri() << filename << "\">" << filename << "</a></p>";
+            ss << "<p style=\"text-align: center\"><a href=\"" << location.uri() << filename << "\" style=\"color: #d0b8de;\">" << filename << "</a></p>";
     }
     ss << "</body></html>";
     request.generateResponse("200 OK", "text/html", ss.str());
@@ -188,7 +188,7 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
 
 /**
  * @brief Serves an error page
- * @param request 
+ * @param request
  * @param error errorcode
  * @return int 0 on success
  */
@@ -215,13 +215,13 @@ int Server::serveError(Request &request, short error) const {
 
 /**
  * @brief Sends a default errorpage based on error code
- * @param request 
- * @param status 
+ * @param request
+ * @param status
  * @return int 0 on success
  */
 int Server::serveDefaultError(Request &request, const string &status) const {
     string msg("<!DOCTYPE html><html><head><title>");
-    msg += status + "</title></head><body><h1>";
+    msg += status + "</title></head><body style=\"background-color: #3a383d;\"><h1 style=\"text-align: center;\">";
     msg += status + "</h1></body></html>";
     request.generateResponse(status, "text/html", msg);
     request.sendResponse();
@@ -230,13 +230,13 @@ int Server::serveDefaultError(Request &request, const string &status) const {
 
 /**
  * @brief Custom status and message
- * @param request 
- * @param status 
- * @param message 
- * @return int 
+ * @param request
+ * @param status
+ * @param message
+ * @return int
  */
 int Server::serveCustom(Request& request, const string& status, const string& message) const {
-    string ret = "<!DOCTYPE html><html><head><title>Error</title></head><body><h1>";
+    string ret = "<!DOCTYPE html><html><head><title>Error</title></head><body style=\"background-color: #3a383d;\"><h1 style=\"text-align: center;\">";
     ret += message + "</h1></body></html>";
     request.generateResponse(status, "text/html", ret);
     request.sendResponse();
