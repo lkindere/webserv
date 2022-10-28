@@ -9,17 +9,17 @@ using namespace std;
 
 #define MAX_RESTARTS 10
 
-void check_leaks()
-{
-	system("leaks webserv");
-}
+// void check_leaks()
+// {
+// 	system("leaks webserv");
+// }
 
 void sigint(int i){ //Exit through terminal by typing exit
     (void)i;
 }
 
 int main(int argc, char *argv[]) {
-	atexit(check_leaks);
+	// atexit(check_leaks);
     if (argc != 2)
         return 1;
     ConfigData conf(parseConfig(argv[1]));
