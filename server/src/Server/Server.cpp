@@ -182,7 +182,7 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
             ss << "<p style=\"text-align: center\"><a href=\"" << location.uri() << filename << "\" style=\"color: #d0b8de;\">" << filename << "</a></p>";
     }
     ss << "</body></html>";
-    free(dir);
+    closedir(dir);
     request.generateResponse("200 OK", "text/html", ss.str());
     request.sendResponse();
     return 0;
