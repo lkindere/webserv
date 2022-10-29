@@ -37,25 +37,22 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
-all: compile_cgis $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(CGI_LIB) $(BIN)
+all: $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(CGI_LIB) $(BIN)
 	
-
-compile_cgis:
-# 	@$(MAKE) --no-print-directory -C $(CGI_SRCS_DIR)
 
 $(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Config Parser Library$(shell tput sgr0)\n"
 	@$(MAKE) --no-print-directory -C $(dir $@)
 
-$(UTILS_LIB):
+$(UTILS_LIB): $(shell find $(dir $(UTILS_LIB))/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Utils Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
-$(REQUEST_LIB):
+$(REQUEST_LIB): $(shell find $(dir $(REQUEST_LIB))/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Request Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
-$(CGI_LIB):
+$(CGI_LIB): $(shell find $(dir $(CGI_LIB))/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling CGI Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
