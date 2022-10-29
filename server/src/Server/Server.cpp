@@ -174,7 +174,7 @@ int Server::serveAutoindex(Request& request, const Location& location, const str
     if (dir == NULL)
         return serveError(request, 500);
     ss << "<!DOCTYPE html><html>";
-    ss << "<head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>Autoindex</title></head><body style=\"background-color: #3a383d;color: black;\">";
+    ss << "<head><link rel=\" stylesheet \" href=\".resources / style.css \"><title>Autoindex" << path << "</title></head><body style=\"background-color: #3a383d;color: black;\">";
     ss << "<h1 style=\"text-align: center;\">Index " << request.uri() << "</h1>";
     for (dirent* ent = readdir(dir); ent != NULL; ent = readdir(dir)) {
         string filename(ent->d_name);
