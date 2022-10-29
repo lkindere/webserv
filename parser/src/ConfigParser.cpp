@@ -301,14 +301,6 @@ static int addLocation(deque< Line > &lines, ServerConfig &server, ConfigData &c
  */
 static int addServer(deque< Line > &lines, ConfigData &conf) {
     lines.pop_front();
-#ifdef DEBUG
-    cerr << "\n===============SERVER:===============";
-    for (deque< Line >::const_iterator it = lines.begin(); it != lines.end(); ++it) {
-        cerr << "\nLine: " << it->index << std::endl;
-        for (deque< Token >::const_iterator tkn = it->tokens.begin(); tkn != it->tokens.end(); ++tkn)
-            cerr << "Token type: " << tkn->type << " value: " << tkn->value << std::endl;
-    }
-#endif
     ServerConfig server;
     while (lines.size() != 0) {
         deque< Token > &tokens = lines[0].tokens;
@@ -354,6 +346,9 @@ static int addServer(deque< Line > &lines, ConfigData &conf) {
                 return setError(conf, lines[0].index, "Invalid token");
         }
     }
+    for (size_t i = 0; i < conf.servers.size(); ++i)
+        if (conf.servers[i].port == server.port)
+            return setError(conf, 0, "Multiple servers set to use the same port");
     conf.servers.push_back(server);
     return 0;
 }
