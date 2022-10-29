@@ -133,11 +133,11 @@ void Request::parseStart(deque< string > &lines) {
         return setError(405);
     size_t qstart = firstline[1].find('&');
     if (qstart != string::npos){
-        _info.query = firstline[1].substr(qstart + 1);
-        _info.uri = firstline[1].substr(0, qstart);
+        _info.query = decode_special(firstline[1].substr(qstart + 1));
+        _info.uri = decode_special(firstline[1].substr(0, qstart));
     }
     else
-        _info.uri = firstline[1];
+        _info.uri = decode_special(firstline[1]);
     if (_info.uri.length() > 255)
         return setError(414);
     _info.protocol = firstline[2];

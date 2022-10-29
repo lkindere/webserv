@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <string>
+#include <sstream>
 
 std::deque< std::string > split(const std::string &str, const std::string &delim, bool noempty = false);
 
@@ -9,7 +10,9 @@ std::pair<size_t, size_t> getMatches(std::deque< std::string > &path, std::deque
 
 std::string itostr(long long n);
 
-#include <sstream>
+char percentToAscii(const std::string& prcnt);
+std::string decode_special(const std::string& input);
+
 
 template < typename T >
 std::string ToString(const T &v) {

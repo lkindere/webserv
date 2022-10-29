@@ -57,3 +57,21 @@ string itostr(long long n){
     ss << n;
     return ss.str();
 }
+
+char percentToAscii(const string& prcnt) {
+    char ret;
+    istringstream(prcnt) >> hex >> ret;
+    return ret;
+}
+
+string decode_special(const string& input) {
+    string decoded;
+    size_t start = 0;
+    for (size_t end = input.find('%', start); end != input.npos; end = input.find('%', start)) {
+        decoded += input.substr(start, end - start);
+        decoded += percentToAscii(input.substr(end + 1, 2));
+        start = end + 3;
+    }
+    decoded += input.substr(start);
+    return decoded;
+}
