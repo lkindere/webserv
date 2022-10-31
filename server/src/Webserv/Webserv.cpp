@@ -201,8 +201,20 @@ Server *Webserv::getServer(Request &request) {
     return first;
 }
 
+static string terminateMessage() {
+    stringstream ss;
+    ss << "HTTP/1.1" << ' ' << "200 OK" << "\r\n"
+       << "Content-Type: " << "text/plain" << "\r\n"
+       << "Content-Length: " << "0" << "\r\n";
+    ss << "Connection: close\r\n\r\n";
+    return ss.str();
+}
+
 void Webserv::terminate() {
+    string terminate = terminateMessage();
     for (size_t i = 1; i < _connections.size(); ++i){
+        if (i >= _sockets.size() + 1)
+            write(_connections[i].fd, (void*)terminate.data(), terminate.length());
         shutdown(_connections[i].fd, O_RDWR);
         close(_connections[i].fd);
     }
