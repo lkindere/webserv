@@ -70,15 +70,20 @@ int Webserv::readwrite() {
     if (_connections[0].revents & POLLIN)
         terminalHandler(_connections[0].fd);
     for (vector< pollfd >::iterator it = _connections.begin() + _sockets.size() + 1;
-        it != _connections.end(); ++it) {
+            it != _connections.end(); ++it) {
         if (checkclose(*it) == 1)
             continue;
         wrapRequest& request = _requests[it->fd];
         if (it->revents & POLLIN){
             if (request == NULL)
                 request = new Request(it->fd, _global.client_max_body_size);
-            else
-                request->readRequest();
+            else {
+                if (request->readRequest() <= 0) {
+                    shutdown(it->fd, SHUT_RDWR);
+                    close(it->fd);
+                    it->fd = -1;
+                }
+            }
             if (request->status() == POSTING || request->status() == RESPONDING) 
                 it->events = POLLOUT;
         }

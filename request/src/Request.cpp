@@ -61,16 +61,17 @@ void Request::init(const string& input) {
 #endif
 }
 
-void Request::readRequest() {
+ssize_t Request::readRequest() {
+    ssize_t bytes_read = 0;
     if (_status.headers_parsed == false) {
         string buffer(BUFFER_SIZE, 0);
-        ssize_t bytes_read = read(_fd, (void*)buffer.data(), BUFFER_SIZE);
-        if (bytes_read <= 0)
-            return;
+        bytes_read = read(_fd, (void*)buffer.data(), BUFFER_SIZE);
+        if (bytes_read <= 0) 
+            return bytes_read;
         _content.message.append(buffer, 0, bytes_read);
         size_t msgstart = _content.message.find("\r\n\r\n");
         if (msgstart == string::npos)
-            return;
+            return bytes_read;
         init(_content.message.substr(0, msgstart));
         _content.message = _content.message.substr(msgstart + 4);
         _content.readlength = _content.message.length();
@@ -79,9 +80,9 @@ void Request::readRequest() {
     else {
         if (_content.encoding == "chunked"){    //Almost untested
             string buffer(BUFFER_SIZE, 0);
-            ssize_t bytes_read = read(_fd, (void*) buffer.data(), BUFFER_SIZE);
+            bytes_read = read(_fd, (void*) buffer.data(), BUFFER_SIZE);
             if (bytes_read <= 0)
-                return;
+                return bytes_read;
             _content.contentlength = 0;
             while (buffer.length() != 0 && _status.content_unchunked == false) {
                 size_t i = buffer.find("\r\n");
@@ -100,9 +101,9 @@ void Request::readRequest() {
         }
         else {
             _content.message.resize(BUFFER_SIZE);
-            ssize_t bytes_read = read(_fd, ( void * ) _content.message.data(), BUFFER_SIZE);
+            bytes_read = read(_fd, ( void * ) _content.message.data(), BUFFER_SIZE);
             if (bytes_read <= 0)
-                return;
+                return bytes_read;
             _content.message.resize(bytes_read);
             _content.readlength += bytes_read;
         }
@@ -117,6 +118,7 @@ void Request::readRequest() {
             || _content.types.find("multipart/form-data") !=  _content.types.end())
                 _status.status = POSTING;
     }
+    return bytes_read;
 // #ifdef DEBUG
 //     cout << "\n\nMessage:\n";
 //     cout << _content.message << "\n\n" << endl;

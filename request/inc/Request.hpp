@@ -87,7 +87,7 @@ public:
     void                setPosted(size_t len) { _content.postedlength = len; }
     void                setAuthentication(int level) { _info.authentication = level; }
 
-    void                readRequest();
+    ssize_t             readRequest();
     void                sendResponse();
     void                generateResponse(const std::string &status, const std::string &type, 
         const std::string& message, const std::vector<std::string>& headers = std::vector<std::string>());
