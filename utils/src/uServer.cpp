@@ -62,10 +62,10 @@ string getPathInfo(const string& path) {
 string removePathInfo(const string& path) {
     size_t i = path.rfind('.');
     if (i == path.npos)
-        return string();
+        return path;
     i = path.find('/', i);
     if (i == path.npos)
-        return string();
+        return path;
     return path.substr(0, i);
 }
 
