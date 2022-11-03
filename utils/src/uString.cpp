@@ -58,7 +58,7 @@ string itostr(long long n){
 }
 
 char percentToAscii(const string& prcnt) {
-    char ret;
+    int ret;
     istringstream(prcnt) >> hex >> ret;
     return ret;
 }
