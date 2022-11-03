@@ -1,0 +1,23 @@
+#General syntax for all possible config options
+
+client_max_body_size 1GB/1MB/1KB/etc
+error_root /pages/error-pages;
+error_page 404 /404.html;
+error_page 500 501 502 503 504 505 /50x.html;
+
+server {
+    root: /startingdir/tosearch/in
+    host: 127.0.0.1
+    listen: 1024;
+    location / {
+        methods GET POST DELETE;
+        autoindex on;
+        uploads /uploadsdir
+        index index.html;
+        cgi_extensions .py .perl .php .etc...;
+        redirect http://www.something.com;
+        authentication 1;
+    }
+}
+
+#index takes priority over autoindex, if both are specified and index file is found autoindex is ignored

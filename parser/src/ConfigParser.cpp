@@ -5,9 +5,6 @@
 #include <fstream>
 #include <set>
 
-#include <iostream>
-
-
 #include "ConfigParser.hpp"
 #include "Config.hpp"
 #include "uString.hpp"

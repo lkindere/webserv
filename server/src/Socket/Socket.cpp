@@ -32,7 +32,8 @@ int Socket::init() {
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd < 0)
         return error();
-    setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT | SO_REUSEADDR, &_fd, sizeof(int));
+    int i = 1;
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(int));
     fcntl(_fd, F_SETFL, O_NONBLOCK);
     if (bind(_fd, ( sockaddr * ) &_address, sizeof(_address)) != 0)
         return error();
@@ -52,7 +53,8 @@ int Socket::socket_accept() {
             return error();
         return -1337;
     }
-    setsockopt(accepted_fd, SOL_SOCKET, SO_REUSEPORT | SO_REUSEADDR, &accepted_fd, sizeof(int));
+    int i = 1;
+    setsockopt(accepted_fd, SOL_SOCKET, SO_REUSEPORT | SO_REUSEADDR, &i, sizeof(int));
     fcntl(accepted_fd, F_SETFL, O_NONBLOCK);
     return accepted_fd;
 }

@@ -24,14 +24,14 @@ int main(int argc, char *argv[]) {
         return 1;
     ConfigData conf(parseConfig(argv[1]));
     if (conf.status.success == 0){
-        cout << "Parsing errorline: " << conf.status.error_line << '\n';
-        cout << "Parsing error msg: " << conf.status.error_msg << std::endl;
+        cerr << "Parsing errorline: " << conf.status.error_line << '\n';
+        cerr << "Parsing error msg: " << conf.status.error_msg << std::endl;
         exit(1);
     }
     size_t restarts = 0;
     signal(SIGINT, sigint);
     while (restarts <= MAX_RESTARTS) {
-        cout << "RESTARTS: " << restarts << endl;
+        cerr << "RESTARTS: " << restarts << endl;
         Webserv webserv(conf);
         if (webserv.init() != 0){
             ++restarts;

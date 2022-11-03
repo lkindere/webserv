@@ -212,9 +212,7 @@ static string terminateMessage() {
 
 void Webserv::terminate() {
     string terminate = terminateMessage();
-    for (size_t i = 1; i < _connections.size(); ++i){
-        if (i >= _sockets.size() + 1)
-            write(_connections[i].fd, (void*)terminate.data(), terminate.length());
+    for (size_t i = 1; i < _connections.size(); ++i) {
         shutdown(_connections[i].fd, O_RDWR);
         close(_connections[i].fd);
     }

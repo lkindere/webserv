@@ -39,26 +39,6 @@ void Request::init(const string& input) {
     if (_info.method == INVALID)
         return;
     parseHeaders(lines);
-#ifdef DEBUG
-    cout << "\nMethod: " << toSmethod(_info.method) << '\n';
-    cout << "URI: " << _info.uri << '\n';
-    cout << "Protocol: " << _info.protocol << '\n';
-    cout << "Host: " << _info.host << "\n\n";
-    cout << "Headers:\n";
-    for (map< string, string >::const_iterator it = _content.headers.begin();
-        it != _content.headers.end(); ++it)
-        cout << it->first << " , " << it->second << '\n';
-    cout << "Cookies:\n";
-    for (vector<pair<string, string> >::const_iterator it = _content.cookies.begin();
-        it != _content.cookies.end(); ++it)
-        cout << "Cookie: " << it->first << " val: " << it->second << '\n';
-    cout << "\nContent length: " << _content.contentlength << '\n';
-    cout << "Message length: " << _content.message.length() << '\n';
-    cout << "Content types: ";
-    for (set< string>::const_iterator it = _content.types.begin(); it != _content.types.end(); ++it)
-        cout << *it << " - ";
-    cout << "\nBoundary: " << _content.boundary << '\n';
-#endif
 }
 
 ssize_t Request::readRequest() {
@@ -221,6 +201,7 @@ void Request::generateResponse(const string &status, const string &type, const s
     ss << "HTTP/1.1" << ' ' << status << "\r\n"
        << "Content-Type: " << type << "\r\n"
        << "Content-Length: " << message.length() << "\r\n";
+    ss << "Connection: Keep-Alive\r\n";
     for (size_t i = 0; i < headers.size(); ++i)
         ss << headers[i] << "\r\n";
     ss << "\r\n" << message;
