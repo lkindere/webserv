@@ -119,10 +119,6 @@ ssize_t Request::readRequest() {
                 _status.status = POSTING;
     }
     return bytes_read;
-// #ifdef DEBUG
-//     cout << "\n\nMessage:\n";
-//     cout << _content.message << "\n\n" << endl;
-// #endif
 }
 
 // Splits first line of request to method/URI/protocol

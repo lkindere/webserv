@@ -1,5 +1,3 @@
-#include "ConfigParser.hpp"
-#include "Config.hpp"
 
 #include <algorithm>//std::find linux
 #include <deque>
@@ -7,11 +5,12 @@
 #include <fstream>
 #include <set>
 
-#include "uString.hpp"
-
-#ifdef DEBUG
 #include <iostream>
-#endif
+
+
+#include "ConfigParser.hpp"
+#include "Config.hpp"
+#include "uString.hpp"
 
 #define CLIENT_BODY_SIZE_MAX 1073741824//1GB
 #define CONFIG_FILE_SIZE_MAX 100000
@@ -209,6 +208,10 @@ static int addLocation(deque< Line > &lines, ServerConfig &server, ConfigData &c
     lines.pop_front();
     while (lines.size() != 0) {
         deque< Token > &tokens = lines[0].tokens;
+        if (tokens.size() == 0) {
+            lines.pop_front();
+            continue;
+        }
         switch (tokens[0].type) {
             case ROOT: {
                 if (tokens.size() != 2)
@@ -304,6 +307,10 @@ static int addServer(deque< Line > &lines, ConfigData &conf) {
     ServerConfig server;
     while (lines.size() != 0) {
         deque< Token > &tokens = lines[0].tokens;
+        if (tokens.size() == 0) {
+            lines.pop_front();
+            continue;
+        }
         switch (tokens[0].type) {
             case ROOT: {
                 if (tokens.size() != 2)

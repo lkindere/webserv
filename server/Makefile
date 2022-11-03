@@ -1,8 +1,6 @@
 CXX = c++
-CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -I $(REQUEST_INC) -I $(CGI_INC)
-LDFLAGS = -L./libs -lconfigparser -lutils -lrequest -lcgi
-
-# CGI_SRCS_DIR = ../cgi
+CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -I $(INCDIR) -I $(CONFIG_PARSER_INC) -I $(UTILS_INC) -I $(REQUEST_INC)
+LDFLAGS = -L./libs -lconfigparser -lutils -lrequest
 
 UTILS_LIB_DIR = ../utils
 UTILS_LIB = $(UTILS_LIB_DIR)/libutils.a
@@ -20,10 +18,6 @@ REQUEST_DIR = ../request
 REQUEST_LIB = $(REQUEST_DIR)/librequest.a
 REQUEST_INC = $(REQUEST_DIR)/inc/
 
-CGI_DIR = ../cgi
-CGI_LIB = $(CGI_DIR)/libcgi.a
-CGI_INC = $(CGI_DIR)/inc/
-
 BIN = webserv
 SRCDIR = ./src
 BUILDDIR = ./build
@@ -37,7 +31,7 @@ DEPENDS := $(patsubst $(SRCDIR)/%$(EXTENSION),$(BUILDDIR)/%.d,$(SOURCES))
 LIBS := $(wildcard ./libs/*)
 CGI_BINS := $(wildcard ./cgi-bin/*)
 
-all: $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(CGI_LIB) $(BIN)
+all: $(CONFIG_PARSER_LIB) $(UTILS_LIB) $(REQUEST_LIB) $(BIN)
 	
 
 $(CONFIG_PARSER_LIB): $(shell find $(CONFIG_PARSER_DIR)/ -type f -name '*.cpp')
@@ -50,10 +44,6 @@ $(UTILS_LIB): $(shell find $(dir $(UTILS_LIB))/ -type f -name '*.cpp')
 
 $(REQUEST_LIB): $(shell find $(dir $(REQUEST_LIB))/ -type f -name '*.cpp')
 	@printf "$(shell tput setaf 2)Compiling Request Library$(shell tput sgr0)\n"
-	@$(MAKE) -C $(dir $@)
-
-$(CGI_LIB): $(shell find $(dir $(CGI_LIB))/ -type f -name '*.cpp')
-	@printf "$(shell tput setaf 2)Compiling CGI Library$(shell tput sgr0)\n"
 	@$(MAKE) -C $(dir $@)
 
 $(BIN): $(OBJECTS)
@@ -72,22 +62,18 @@ $(OBJDIR)/%.o: $(SRCDIR)/%$(EXTENSION)
 
 .PHONY: clean
 clean:
-# @$(MAKE) -C $(CGI_SRCS_DIR) clean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) clean
 	@$(MAKE) -C $(dir $(UTILS_LIB)) clean
 	@$(MAKE) -C $(dir $(REQUEST_LIB)) clean
-	@$(MAKE) -C $(dir $(CGI_LIB)) clean
-	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)$(shell tput sgr0)\n"
-	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS) $(CGI_BINS)
+	@printf "$(shell tput setaf 1)Removing $(OBJECTS) $(DEPENDS) $(LIBS) $(shell tput sgr0)\n"
+	@$(RM) $(OBJECTS) $(DEPENDS) $(LIBS)
 	@$(RM) -r $(BUILDDIR)
 
 .PHONY: fclean
 fclean: clean
-# @$(MAKE) -C $(CGI_SRCS_DIR) fclean
 	@$(MAKE) -C $(dir $(CONFIG_PARSER_LIB)) fclean
 	@$(MAKE) -C $(dir $(UTILS_LIB)) fclean
 	@$(MAKE) -C $(dir $(REQUEST_LIB)) fclean
-	@$(MAKE) -C $(dir $(CGI_LIB)) fclean
 	@printf "$(shell tput setaf 1)Removing $(BIN)$(shell tput sgr0)\n"
 	@$(RM) $(BIN)
 

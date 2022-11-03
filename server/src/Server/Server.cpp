@@ -6,16 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef DEBUG
-    #include <iostream>
-#endif
-
 #include "Server.hpp"
 #include "uServer.hpp"
 #include "uString.hpp"
 #include "serveCGI.hpp"
 #include "Types.hpp"
-#include "Cgi.hpp"
 
 using namespace std;
 
@@ -105,8 +100,7 @@ int Server::serveCGI(Request& request, const string& fullpath) const {
         it = filebuffers.insert(make_pair(request.fd(), make_pair(tmpfile(), tmpfile()))).first;
     if (request.postedlength() < request.contentlength())
         return bufferToFile(request, it->second.first);
-    Cgi cgi(generateENV(request, fullpath));
-    if (cgi.execute(path, it->second.first, it->second.second) != 0){
+    if (cgiExec(generateENV(request, fullpath), path, it->second.first, it->second.second) != 0) {
         removeFilebuffer(filebuffers, it);
         return serveError(request, 500);
     }

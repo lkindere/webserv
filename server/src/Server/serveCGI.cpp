@@ -69,3 +69,26 @@ int parseResponse(string& message, map<string, string>& headers, FILE* filebuffe
     message = message.substr(end);
     return 0;
 }
+
+int cgiExec(const vector<string>& env, const string& path, FILE* in, FILE* out) {
+    char** argv = { NULL };
+    char* envp[env.size() + 1];
+    for (size_t i = 0; i < env.size(); ++i)
+        envp[i] = (char *)env[i].data();
+    envp[env.size()] = NULL;
+    pid_t pid = fork();
+    if (pid < 0)
+        return 1;
+    if (pid == 0){
+        dup2(fileno(in), STDIN_FILENO);
+        dup2(fileno(out), STDOUT_FILENO);
+        execve(path.data(), argv, envp);
+        exit(1);
+    }
+    int status;
+    waitpid(pid, &status, 0);
+    if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+        return 1;
+    rewind(out);
+    return 0;
+}

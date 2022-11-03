@@ -11,3 +11,4 @@ void removeFilebuffer(std::map<int, std::pair<FILE*, FILE*> >& filebuffers,
 int parseResponse(std::string& message,
     std::map<std::string, std::string>& headers, FILE* filebuffer);
 int bufferToFile(Request& request, FILE* filebuffer);
+int cgiExec(const std::vector<std::string>& env, const std::string& path, FILE* in, FILE* out);
